@@ -19,6 +19,7 @@ cp .env.example .env
 npm run dev
 ```
 
+
 ## Supabase Setup
 
 ### Database Tables
