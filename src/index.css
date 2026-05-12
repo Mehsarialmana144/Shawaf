@@ -77,3 +77,54 @@
 [dir="rtl"] .rtl-flip {
   transform: scaleX(-1);
 }
+/* RTL / LTR safety fixes */
+html[dir='rtl'] {
+  direction: rtl;
+}
+
+html[dir='ltr'] {
+  direction: ltr;
+}
+
+/* Keep technical values readable */
+input[type='email'],
+input[type='password'],
+input[type='url'],
+input[type='tel'],
+input[type='time'],
+input[type='date'],
+code,
+pre {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Let mixed Arabic/English text choose its own direction */
+[dir='auto'] {
+  unicode-bidi: plaintext;
+}
+
+/* Keep Leaflet map stable in Arabic mode */
+.leaflet-container,
+.leaflet-container * {
+  direction: ltr;
+}
+
+.leaflet-popup-content {
+  direction: inherit;
+}
+
+/* Tables should stay clean in both languages */
+table {
+  border-collapse: collapse;
+}
+
+/* Better Arabic rendering */
+html[lang='ar'] body {
+  font-family: 'Cairo', 'Inter', system-ui, sans-serif;
+}
+
+/* Better English rendering */
+html[lang='en'] body {
+  font-family: 'Inter', system-ui, sans-serif;
+}

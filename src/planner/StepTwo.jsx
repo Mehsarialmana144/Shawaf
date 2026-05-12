@@ -1,8 +1,38 @@
-import { useState } from 'react'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../context/AuthContext'
+import { useEffect, useState } from 'react'
 import { useLang } from '../context/LanguageContext'
 import SelectionCard from '../components/SelectionCard'
+
+const CITY_LABELS_AR = {
+  Riyadh: 'الرياض',
+  Jeddah: 'جدة',
+  Mecca: 'مكة',
+  Medina: 'المدينة المنورة',
+  Dammam: 'الدمام',
+  'Al-Khobar': 'الخبر',
+  Dhahran: 'الظهران',
+  'Al-Ahsa': 'الأحساء',
+  'Al-Ula': 'العلا',
+  NEOM: 'نيوم',
+  Abha: 'أبها',
+  Taif: 'الطائف',
+  Yanbu: 'ينبع',
+  Tabuk: 'تبوك',
+  Hail: 'حائل',
+  Najran: 'نجران',
+  Jizan: 'جازان',
+  Diriyah: 'الدرعية',
+  Buraidah: 'بريدة',
+  Jubail: 'الجبيل',
+  'Al-Baha': 'الباحة',
+  Sakaka: 'سكاكا',
+  'Hafar Al-Batin': 'حفر الباطن',
+  KAEC: 'مدينة الملك عبدالله الاقتصادية',
+}
+
+function getCityLabel(city, lang) {
+  if (!city) return ''
+  return lang === 'ar' ? CITY_LABELS_AR[city] || city : city
+}
 
 function daysBetween(start, end) {
   if (!start || !end) return 1
@@ -21,14 +51,126 @@ function Section({ icon, title, children }) {
   )
 }
 
+function LoadingExperience({ isArabic }) {
+  const messages = isArabic
+    ? [
+        'نختار أفضل الأماكن حسب تفضيلاتك...',
+        'نرتب الأيام حسب المدن والمسار...',
+        'نتأكد من أوقات العمل والإحداثيات...',
+        'نجهز لك خطة رحلة ممتعة...',
+      ]
+    : [
+        'Choosing the best places for your preferences...',
+        'Arranging days based on your city route...',
+        'Checking opening hours and coordinates...',
+        'Preparing a fun travel plan for you...',
+      ]
+
+  const [messageIndex, setMessageIndex] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMessageIndex((prev) => (prev + 1) % messages.length)
+    }, 2500)
+
+    return () => clearInterval(timer)
+  }, [messages.length])
+
+  return (
+    <div className="card p-8 text-center overflow-hidden relative">
+      <div className="absolute inset-x-0 top-10 h-20 pointer-events-none">
+        <div className="animate-[fly_3.2s_ease-in-out_infinite] text-4xl">
+          ✈️
+        </div>
+      </div>
+
+      <style>
+        {`
+          @keyframes fly {
+            0% { transform: translateX(-45%) translateY(10px) rotate(-8deg); opacity: 0.4; }
+            25% { transform: translateX(-15%) translateY(-8px) rotate(4deg); opacity: 1; }
+            50% { transform: translateX(15%) translateY(4px) rotate(-3deg); opacity: 1; }
+            75% { transform: translateX(35%) translateY(-10px) rotate(6deg); opacity: 1; }
+            100% { transform: translateX(60%) translateY(8px) rotate(-6deg); opacity: 0.4; }
+          }
+        `}
+      </style>
+
+      <div className="pt-24">
+        <div className="flex justify-center gap-3 mb-5 text-3xl">
+          <span className="animate-bounce">🧳</span>
+          <span className="animate-bounce [animation-delay:150ms]">🗺️</span>
+          <span className="animate-bounce [animation-delay:300ms]">🏝️</span>
+          <span className="animate-bounce [animation-delay:450ms]">☕</span>
+        </div>
+
+        <h3 className="text-xl font-bold text-stone-900 mb-2">
+          {isArabic ? 'جاري توليد خطة الرحلة' : 'Generating Your Itinerary'}
+        </h3>
+
+        <p className="text-sm text-stone-500 max-w-md mx-auto leading-relaxed min-h-[44px]">
+          {messages[messageIndex]}
+        </p>
+
+        <div className="mt-6 flex justify-center">
+          <div className="flex gap-2">
+            <span className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse" />
+            <span className="w-2.5 h-2.5 bg-orange-400 rounded-full animate-pulse [animation-delay:200ms]" />
+            <span className="w-2.5 h-2.5 bg-orange-300 rounded-full animate-pulse [animation-delay:400ms]" />
+          </div>
+        </div>
+
+        <div className="mt-6 bg-orange-50 border border-orange-100 rounded-2xl px-4 py-3 text-xs text-orange-700">
+          {isArabic
+            ? 'قد يستغرق ذلك عدة ثوانٍ لأن شواف يختار الأماكن المناسبة ويوازن بين المدن والوقت.'
+            : 'This may take a few seconds while Shawaf balances places, cities, and timing.'}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function StepTwo({ data, onChange, onBack, onGenerate }) {
-  const { t } = useLang()
-  const { user } = useAuth()
+  const { t, lang } = useLang()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const isArabic = lang === 'ar'
+
+  const text = {
+    days: isArabic ? 'الأيام' : 'Days',
+    multiCityRoute: isArabic
+      ? 'سيتم ترتيب الرحلة حسب هذا المسار:'
+      : 'Multi-city route will follow this order:',
+    validation: isArabic
+      ? 'يرجى اختيار مدينة واحدة على الأقل، والميزانية، ومستوى النشاط، ونوع نشاط واحد على الأقل.'
+      : 'Please select at least one city, budget, activity level, and one activity type.',
+    generateFailed: isArabic
+      ? 'فشل إرسال الطلب لتوليد الرحلة.'
+      : 'Failed to send a request to the Edge Function',
+    requestFailed: isArabic
+      ? 'فشل طلب توليد الرحلة.'
+      : 'Edge Function request failed',
+    noResult: isArabic
+      ? 'لم يتم إرجاع جدول رحلة.'
+      : 'No itinerary was returned from the Edge Function.',
+  }
+
+  const selectedCities = data.cities?.length
+    ? data.cities
+    : data.city
+    ? [data.city]
+    : []
+
+  const primaryCity = selectedCities[0] || data.city || ''
+
+  const cityDisplay = selectedCities
+    .map((city) => getCityLabel(city, lang))
+    .join(isArabic ? ' ← ' : ' → ')
+
   const toggleInterest = (interest) => {
     const current = data.interests || []
+
     onChange({
       interests: current.includes(interest)
         ? current.filter((i) => i !== interest)
@@ -46,22 +188,25 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
       const notesParts = [
         data.notes || '',
         data.numberOfPeople ? `Number of people: ${data.numberOfPeople}` : '',
-        data.accommodation ? `Accommodation: ${data.accommodation}` : '',
-        data.tripType ? `Trip type: ${data.tripType}` : '',
+        selectedCities.length > 1
+          ? `Multi-city route order: ${selectedCities.join(' -> ')}`
+          : '',
       ].filter(Boolean)
 
       const payload = {
-        city: data.city,
+        city: primaryCity,
+        cities: selectedCities,
         budget: data.budget,
         days,
-        travelWith: data.travelWith,
-        interests: data.interests,
+        travelWith: data.travelWith || 'General',
+        interests: data.interests || [],
         tripStyle: data.activityLevel,
-        hasCar:
-          data.transportation === 'rentalCar' ||
-          data.transportation === 'privateDriver',
-        preferredTime: data.preferredTime,
+        hasCar: false,
+        preferredTime: 'No Preference',
         notes: notesParts.join(' | '),
+        numberOfPeople: data.numberOfPeople,
+        accommodation: 'Not specified',
+        tripType: data.tripType || 'Leisure',
       }
 
       const response = await fetch(
@@ -80,41 +225,17 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result?.error || 'Edge Function request failed')
+        throw new Error(result?.error || text.requestFailed)
       }
 
       if (!result) {
-        throw new Error('No itinerary was returned from the Edge Function.')
-      }
-
-      if (user) {
-        const { error: saveError } = await supabase.from('trips').insert([
-          {
-            user_id: user.id,
-            city: data.city,
-            budget: data.budget,
-            days,
-            travel_with: data.travelWith,
-            interests: data.interests || [],
-            trip_style: data.activityLevel,
-            has_car:
-              data.transportation === 'rentalCar' ||
-              data.transportation === 'privateDriver',
-            preferred_time: data.preferredTime,
-            notes: notesParts.join(' | '),
-            ai_plan: result,
-          },
-        ])
-
-        if (saveError) {
-          console.error('Trip save error:', saveError)
-        }
+        throw new Error(text.noResult)
       }
 
       onGenerate(result)
     } catch (err) {
       console.error('Generate itinerary error:', err)
-      setError(err.message || 'Failed to send a request to the Edge Function')
+      setError(err.message || text.generateFailed)
     } finally {
       setLoading(false)
     }
@@ -143,34 +264,17 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
     { key: 'Photography Spots', label: t('photography'), emoji: '📸' },
   ]
 
-  const accommodations = [
-    { key: 'Budget Hotel', label: t('budgetHotel'), emoji: '🏨' },
-    { key: 'Boutique Hotel', label: t('boutiqueHotel'), emoji: '🏩' },
-    { key: '5-Star Hotel', label: t('fiveStarHotel'), emoji: '⭐' },
-    { key: 'Resort', label: t('resort'), emoji: '🏝️' },
-    { key: 'Vacation Rental', label: t('vacationRental'), emoji: '🏠' },
-  ]
+  const canGenerate =
+    selectedCities.length > 0 &&
+    data.startDate &&
+    data.endDate &&
+    data.budget &&
+    data.activityLevel &&
+    (data.interests || []).length > 0
 
-  const transports = [
-    { key: 'rentalCar', label: t('rentalCar'), emoji: '🚗' },
-    { key: 'taxiRide', label: t('taxiRide'), emoji: '🚕' },
-    { key: 'publicTransport', label: t('publicTransport'), emoji: '🚌' },
-    { key: 'privateDriver', label: t('privateDriver'), emoji: '🚘' },
-  ]
-
-  const times = [
-    { key: 'Morning', label: t('morning') },
-    { key: 'Afternoon', label: t('afternoon') },
-    { key: 'Evening', label: t('evening') },
-    { key: 'No Preference', label: t('noPreference') },
-  ]
-
-  const companions = [
-    { key: 'Alone', label: t('alone'), emoji: '🧍' },
-    { key: 'Friends', label: t('friends'), emoji: '👫' },
-    { key: 'Family', label: t('familyGroup'), emoji: '👨‍👩‍👧' },
-    { key: 'Family with Kids', label: t('familyKids'), emoji: '👶' },
-  ]
+  if (loading) {
+    return <LoadingExperience isArabic={isArabic} />
+  }
 
   return (
     <div>
@@ -178,28 +282,44 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
         <h3 className="flex items-center gap-2 font-semibold text-orange-700 mb-3">
           <span>🗺️</span> {t('tripSummary')}
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-          <div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+          <div className="sm:col-span-2">
             <span className="text-stone-500">{t('destinationCityLabel')}</span>{' '}
-            <strong>{data.city}</strong>
+            <strong dir="auto">{cityDisplay}</strong>
           </div>
+
           <div>
             <span className="text-stone-500">{t('startDateLabel')}</span>{' '}
             <strong>{data.startDate}</strong>
           </div>
+
           <div>
             <span className="text-stone-500">{t('endDateLabel')}</span>{' '}
             <strong>{data.endDate}</strong>
           </div>
+
           <div>
             <span className="text-stone-500">{t('numberOfPeopleLabel')}</span>{' '}
             <strong>{data.numberOfPeople}</strong>
           </div>
+
+          <div>
+            <span className="text-stone-500">{text.days}:</span>{' '}
+            <strong>{days}</strong>
+          </div>
         </div>
+
+        {selectedCities.length > 1 && (
+          <div className="mt-3 text-xs text-orange-700 bg-white border border-orange-100 rounded-xl px-3 py-2">
+            {text.multiCityRoute}{' '}
+            <strong dir="auto">{cityDisplay}</strong>
+          </div>
+        )}
       </div>
 
       <Section icon="💵" title={t('budgetRange')}>
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-3 gap-3">
           {budgets.map((b) => (
             <SelectionCard
               key={b.key}
@@ -216,19 +336,6 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
             />
           ))}
         </div>
-        <div className="flex justify-between text-xs text-stone-400 mb-1">
-          <span>SAR 1,000</span>
-          <span>SAR 5,000</span>
-        </div>
-        <input
-          type="range"
-          min={1000}
-          max={5000}
-          step={100}
-          value={data.budgetAmount || 2000}
-          onChange={(e) => onChange({ budgetAmount: Number(e.target.value) })}
-          className="w-full accent-orange-500"
-        />
       </Section>
 
       <Section icon="⚡" title={t('activityLevel')}>
@@ -247,7 +354,8 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
 
       <Section icon="🎯" title={t('activityTypes')}>
         <p className="text-xs text-stone-400 mb-3">{t('selectAllInterest')}</p>
-        <div className="grid grid-cols-4 gap-2">
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {activityTypes.map((a) => (
             <SelectionCard
               key={a.key}
@@ -260,75 +368,11 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
         </div>
       </Section>
 
-      <Section icon="🏨" title={t('accommodationType')}>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {accommodations.map((a) => (
-            <SelectionCard
-              key={a.key}
-              emoji={a.emoji}
-              label={a.label}
-              selected={data.accommodation === a.key}
-              onClick={() => onChange({ accommodation: a.key })}
-            />
-          ))}
-        </div>
-      </Section>
-
-      <Section icon="🚗" title={t('transportation')}>
-        <div className="grid grid-cols-2 gap-3">
-          {transports.map((tr) => (
-            <SelectionCard
-              key={tr.key}
-              emoji={tr.emoji}
-              label={tr.label}
-              wide
-              selected={data.transportation === tr.key}
-              onClick={() => onChange({ transportation: tr.key })}
-            />
-          ))}
-        </div>
-      </Section>
-
-      <Section icon="🕐" title={t('preferredTime')}>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {times.map((ti) => (
-            <SelectionCard
-              key={ti.key}
-              emoji={
-                ti.key === 'Morning'
-                  ? '🌅'
-                  : ti.key === 'Afternoon'
-                  ? '☀️'
-                  : ti.key === 'Evening'
-                  ? '🌇'
-                  : '🌐'
-              }
-              label={ti.label}
-              selected={data.preferredTime === ti.key}
-              onClick={() => onChange({ preferredTime: ti.key })}
-            />
-          ))}
-        </div>
-      </Section>
-
-      <Section icon="👥" title={t('travelWith')}>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {companions.map((c) => (
-            <SelectionCard
-              key={c.key}
-              emoji={c.emoji}
-              label={c.label}
-              selected={data.travelWith === c.key}
-              onClick={() => onChange({ travelWith: c.key })}
-            />
-          ))}
-        </div>
-      </Section>
-
       <div className="card p-6 mb-4">
         <h3 className="flex items-center gap-2 font-semibold text-stone-900 text-base mb-3">
           <span className="text-orange-500">📝</span> {t('additionalNotes')}
         </h3>
+
         <textarea
           className="input-field resize-none h-24"
           placeholder={t('notesPlaceholder')}
@@ -343,23 +387,23 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
         </div>
       )}
 
+      {!canGenerate && (
+        <div className="bg-orange-50 border border-orange-100 text-orange-700 px-4 py-3 rounded-xl text-sm mb-4">
+          {text.validation}
+        </div>
+      )}
+
       <div className="flex gap-3">
         <button onClick={onBack} className="btn-outline flex-shrink-0">
           {t('back')}
         </button>
+
         <button
           onClick={handleGenerate}
-          disabled={loading}
+          disabled={loading || !canGenerate}
           className="flex-1 btn-primary justify-center py-4 rounded-2xl text-base disabled:opacity-60"
         >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              {t('generating')}
-            </span>
-          ) : (
-            t('generateItinerary')
-          )}
+          {t('generateItinerary')}
         </button>
       </div>
     </div>

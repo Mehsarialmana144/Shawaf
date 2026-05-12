@@ -18,8 +18,9 @@ const translations = {
     heroTag: '⚡ AI-Powered Travel Planning',
     heroTitle: 'Plan Your Perfect Trip in Saudi Arabia with AI',
     heroBrand: 'Shawaf — شواف',
-    heroSub: 'Enjoy smart, personalized trip planning powered by the latest AI technology. Create detailed daily itineraries that match your preferences and budget across Saudi Arabia.',
-    startPlanning: 'Start Planning Your Trip →',
+    heroSub:
+      'Enjoy smart, personalized trip planning powered by the latest AI technology. Create detailed daily itineraries that match your preferences and budget across Saudi Arabia.',
+    startPlanning: 'Start Planning Your Trip',
     learnMore: 'Learn More',
     rating: '4.9',
     ratingLabel: 'User Rating',
@@ -33,17 +34,23 @@ const translations = {
     // Features
     whyChoose: 'Why Choose Shawaf?',
     feat1Title: 'AI-Powered Planning',
-    feat1Desc: 'Our advanced AI generates personalized itineraries based on your unique preferences, travel style, and budget.',
+    feat1Desc:
+      'Our advanced AI generates personalized itineraries based on your unique preferences, travel style, and budget.',
     feat2Title: 'Interactive Maps',
-    feat2Desc: 'Visualize your journey with integrated maps showing all attractions, distances, and optimal routes.',
+    feat2Desc:
+      'Visualize your journey with integrated maps showing all attractions, distances, and optimal routes.',
     feat3Title: 'Smart Scheduling',
-    feat3Desc: 'Automatically optimize your schedule based on opening hours, travel times, and attraction priorities.',
+    feat3Desc:
+      'Automatically optimize your schedule based on opening hours, travel times, and attraction priorities.',
     feat4Title: 'PDF Export',
-    feat4Desc: 'Download your complete itinerary as a beautifully formatted PDF to take offline anywhere.',
+    feat4Desc:
+      'Download your complete itinerary as a beautifully formatted PDF to take offline anywhere.',
     feat5Title: 'Multi-City Trips',
-    feat5Desc: 'Plan complex multi-city journeys across Saudi Arabia with seamless city-to-city transitions.',
+    feat5Desc:
+      'Plan complex multi-city journeys across Saudi Arabia with seamless city-to-city transitions.',
     feat6Title: '24/7 Available',
-    feat6Desc: 'Plan your dream trip anytime, anywhere. No waiting, no appointments needed.',
+    feat6Desc:
+      'Plan your dream trip anytime, anywhere. No waiting, no appointments needed.',
 
     // How it works
     howItWorks: 'How Shawaf Works',
@@ -54,27 +61,32 @@ const translations = {
     step3: 'Generate Itinerary',
     step3Desc: 'Our AI instantly generates a detailed daily travel plan.',
     step4: 'Explore & Enjoy',
-    step4Desc: 'Use the interactive map, export PDF, and enjoy your next journey.',
+    step4Desc:
+      'Use the interactive map, export PDF, and enjoy your next journey.',
 
     // Testimonials
     travelers_say: 'What Travelers Say',
-    t1: '"Shawaf planned my 5-day Riyadh trip perfectly. The AI understood exactly what I wanted!"',
+    t1:
+      '"Shawaf planned my 5-day Riyadh trip perfectly. The AI understood exactly what I wanted!"',
     t1Name: 'Khalid Al-Mansour',
     t1City: 'Riyadh',
-    t2: '"The interactive map feature is amazing. I could see all my planned stops at a glance."',
+    t2:
+      '"The interactive map feature is amazing. I could see all my planned stops at a glance."',
     t2Name: 'Sara Al-Otaibi',
     t2City: 'Jeddah',
-    t3: '"Generated a complete Al-Ula itinerary in seconds. Saved me hours of research!"',
+    t3:
+      '"Generated a complete Al-Ula itinerary in seconds. Saved me hours of research!"',
     t3Name: 'Mohammed Bin Nasser',
     t3City: 'Al-Ula',
 
     // CTA
     ctaTitle: 'Ready to Explore Saudi Arabia?',
     ctaSub: 'Join thousands of travelers planning smart with Shawaf.',
-    ctaBtn: 'Start Planning Your Trip →',
+    ctaBtn: 'Start Planning Your Trip',
 
     // Footer
-    footerDesc: 'AI-powered travel planning for Saudi Arabia. Aligned with Vision 2030.',
+    footerDesc:
+      'AI-powered travel planning for Saudi Arabia. Aligned with Vision 2030.',
     vision2030: '✦ Aligned with Vision 2030',
     quickLinks: 'Quick Links',
     account: 'Account',
@@ -106,7 +118,7 @@ const translations = {
     endDate: 'End Date',
     numberOfPeople: 'Number of People',
     tripType: 'Trip Type',
-    configureTrip: 'Configure Trip →',
+    configureTrip: 'Configure Trip',
     tripDayCount: (n) => `📅 ${n} day${n !== 1 ? 's' : ''} trip`,
 
     cultural: 'Cultural & Heritage',
@@ -116,7 +128,7 @@ const translations = {
     business: 'Business & Tourism',
     family: 'Family Trip',
 
-    budgetRange: 'Budget Range (SAR)',
+    budgetRange: 'Budget Range',
     budget: 'Budget',
     midRange: 'Mid-Range',
     luxury: 'Luxury',
@@ -134,31 +146,10 @@ const translations = {
     sportsAdventure: 'Sports & Adventure',
     entertainment: 'Entertainment',
     photography: 'Photography Spots',
-    accommodationType: 'Accommodation Type',
-    budgetHotel: 'Budget Hotel',
-    boutiqueHotel: 'Boutique Hotel',
-    fiveStarHotel: '5-Star Hotel',
-    resort: 'Resort',
-    vacationRental: 'Vacation Rental',
-    transportation: 'Transportation',
-    rentalCar: 'Rental Car',
-    taxiRide: 'Taxi / Ride-share',
-    publicTransport: 'Public Transport',
-    privateDriver: 'Private Driver',
-    preferredTime: 'Preferred Time',
-    morning: 'Morning',
-    afternoon: 'Afternoon',
-    evening: 'Evening',
-    noPreference: 'No Preference',
-    travelWith: 'Traveling With',
-    alone: 'Alone',
-    friends: 'Friends',
-    familyGroup: 'Family',
-    familyKids: 'Family with Kids',
     additionalNotes: 'Additional Notes',
     notesPlaceholder: 'Any special requirements or preferences...',
-    generateItinerary: 'Generate Itinerary →',
-    back: '← Back',
+    generateItinerary: 'Generate Itinerary',
+    back: 'Back',
 
     // Itinerary
     tripSummary: 'Trip Summary',
@@ -169,10 +160,11 @@ const translations = {
     generatePDF: 'Generate PDF',
     saveTrip: 'Save Trip',
     regenerate: 'Regenerate Plan',
-    backToPlanner: '← Back to Planner',
+    backToPlanner: 'Back to Planner',
     openInMaps: 'Open in Maps',
     generating: 'Generating your itinerary...',
-    generatingDesc: 'AI is crafting your perfect trip. This may take a few moments.',
+    generatingDesc:
+      'AI is crafting your perfect trip. This may take a few moments.',
     saving: 'Saving...',
     tripSaved: 'Trip saved successfully!',
     day: 'Day',
@@ -214,6 +206,7 @@ const translations = {
   },
 
   ar: {
+    // Nav
     home: 'الرئيسية',
     tripPlanner: 'تخطيط الرحلة',
     itinerary: 'جدول الرحلة',
@@ -225,14 +218,17 @@ const translations = {
     arabic: 'عربي',
     english: 'English',
 
+    // Hero
     heroTag: '⚡ تخطيط سياحي بالذكاء الاصطناعي',
-    heroTitle: 'خطط لرحلتك المثالية في المملكة العربية السعودية بالذكاء الاصطناعي',
-    heroBrand: 'Shawaf – شواف',
-    heroSub: 'استمتع بتخطيط سفر ذكي ومخصص بأحدث تقنيات الذكاء الاصطناعي. أنشئ جداول رحلات مفصلة يومية مع تفضيلاتك وميزانيتك واهتماماتك في المملكة العربية السعودية.',
-    startPlanning: 'ابدأ تخطيط رحلتك ←',
+    heroTitle:
+      'خطط لرحلتك المثالية في المملكة العربية السعودية بالذكاء الاصطناعي',
+    heroBrand: 'Shawaf — شواف',
+    heroSub:
+      'استمتع بتخطيط سفر ذكي ومخصص بأحدث تقنيات الذكاء الاصطناعي. أنشئ جداول رحلات يومية تناسب تفضيلاتك وميزانيتك في المملكة العربية السعودية.',
+    startPlanning: 'ابدأ تخطيط رحلتك',
     learnMore: 'اعرف المزيد',
     rating: '4.9',
-    ratingLabel: 'تقييم المستخدم',
+    ratingLabel: 'تقييم المستخدمين',
     cities: '+30',
     citiesLabel: 'مدينة مشمولة',
     travelers: '+12K',
@@ -240,46 +236,64 @@ const translations = {
     trips: '+50K',
     tripsLabel: 'رحلة مُولَّدة',
 
+    // Features
     whyChoose: 'لماذا تختار شواف؟',
     feat1Title: 'تخطيط بالذكاء الاصطناعي',
-    feat1Desc: 'يولّد الذكاء الاصطناعي المتقدم لدينا خططاً مخصصة بناءً على تفضيلاتك الفريدة وأسلوب سفرك وميزانيتك.',
+    feat1Desc:
+      'يولّد الذكاء الاصطناعي خططًا مخصصة بناءً على تفضيلاتك وأسلوب رحلتك وميزانيتك.',
     feat2Title: 'خرائط تفاعلية',
-    feat2Desc: 'تصوّر رحلتك بخرائط متكاملة تُظهر جميع المعالم والمسافات والطرق المثلى.',
+    feat2Desc:
+      'اعرض رحلتك على خريطة تفاعلية توضّح المعالم ومحطات الرحلة بسهولة.',
     feat3Title: 'جدولة ذكية',
-    feat3Desc: 'تحسين جدولك تلقائياً بناءً على أوقات الفتح وأوقات السفر وأولويات المعالم.',
+    feat3Desc:
+      'يساعدك شواف على ترتيب جدولك بناءً على أوقات الفتح ومدة الزيارة وأولوية الأماكن.',
     feat4Title: 'تصدير PDF',
-    feat4Desc: 'نزّل خطة رحلتك الكاملة كملف PDF منسّق بشكل جميل لتأخذه معك في أي مكان.',
+    feat4Desc:
+      'حمّل خطة رحلتك كملف PDF منسق للاحتفاظ بها واستخدامها لاحقًا.',
     feat5Title: 'رحلات متعددة المدن',
-    feat5Desc: 'خطّط لرحلات معقدة عبر مدن المملكة بانتقالات سلسة بين المدن.',
-    feat6Title: 'متاح 24/7',
-    feat6Desc: 'خطّط لرحلة أحلامك في أي وقت وأي مكان. لا انتظار ولا مواعيد.',
+    feat5Desc:
+      'خطط لرحلات تشمل أكثر من مدينة داخل المملكة مع ترتيب منطقي بين المدن.',
+    feat6Title: 'متاح دائمًا',
+    feat6Desc:
+      'خطط لرحلتك في أي وقت ومن أي مكان بدون انتظار أو مواعيد.',
 
-    howItWorks: 'كيف يعمل شواف',
-    step1: 'إنشاء حسابك',
-    step1Desc: 'سجّل واضبط ملفك الشخصي مع اهتماماتك وتفضيلاتك.',
-    step2: 'تكوين رحلتك',
-    step2Desc: 'أدخل وجهاتك والتواريخ والميزانية وتفضيلات الأنشطة.',
-    step3: 'توليد الجدول',
-    step3Desc: 'يُنشئ ذكاؤنا الاصطناعي فوراً خطة سفر يومية مفصلة ومحسّنة.',
+    // How it works
+    howItWorks: 'كيف يعمل شواف؟',
+    step1: 'إنشاء الحساب',
+    step1Desc: 'أنشئ حسابك وابدأ بإدخال معلومات رحلتك.',
+    step2: 'تحديد تفاصيل الرحلة',
+    step2Desc:
+      'اختر المدن، التواريخ، الميزانية، ومستوى النشاط المناسب لك.',
+    step3: 'توليد جدول الرحلة',
+    step3Desc:
+      'يقوم الذكاء الاصطناعي بتوليد جدول يومي مناسب لتفضيلاتك.',
     step4: 'استكشف واستمتع',
-    step4Desc: 'استخدم الخريطة التفاعلية، صدّر ملف PDF، واستمتع برحلتك المثالية.',
+    step4Desc:
+      'استخدم الخريطة، عدّل الخطة، واحفظ جدول رحلتك بسهولة.',
 
-    travelers_say: 'ماذا يقول المسافرون',
-    t1: '"خطّط شواف رحلتي لمدة 5 أيام في الرياض بشكل مثالي. فهم الاصطناعي بالضبط ما أريده."',
+    // Testimonials
+    travelers_say: 'ماذا يقول المسافرون؟',
+    t1:
+      '"خطط شواف رحلتي في الرياض بشكل رائع، وكانت الخطة مناسبة جدًا لتفضيلاتي."',
     t1Name: 'خالد المنصور',
-    t1City: 'Riyadh',
-    t2: '"ميزة الخريطة التفاعلية رائعة. استطعت رؤية جميع محطاتي المخططة في لمحة واحدة."',
+    t1City: 'الرياض',
+    t2:
+      '"ميزة الخريطة التفاعلية ممتازة. استطعت رؤية جميع محطات الرحلة بسهولة."',
     t2Name: 'سارة العتيبي',
-    t2City: 'Jeddah',
-    t3: '"ولّد جدول رحلة كاملاً للعُلا في ثوانٍ. وفّر علي ساعات من البحث."',
+    t2City: 'جدة',
+    t3:
+      '"أنشأ شواف جدول رحلة كامل للعلا خلال ثوانٍ ووفّر علي وقت البحث."',
     t3Name: 'محمد بن ناصر',
-    t3City: 'Al-Ula',
+    t3City: 'العلا',
 
-    ctaTitle: 'هل أنت مستعد لاستكشاف المملكة؟',
-    ctaSub: 'انضم إلى آلاف المسافرين الذين يخططون بذكاء مع شواف.',
-    ctaBtn: 'ابدأ تخطيط رحلتك ←',
+    // CTA
+    ctaTitle: 'جاهز لاستكشاف المملكة؟',
+    ctaSub: 'انضم إلى المسافرين الذين يخططون بذكاء مع شواف.',
+    ctaBtn: 'ابدأ تخطيط رحلتك',
 
-    footerDesc: 'تخطيط سياحي بالذكاء الاصطناعي للمملكة العربية السعودية. متوافق مع رؤية 2030.',
+    // Footer
+    footerDesc:
+      'منصة تخطيط رحلات سياحية داخل المملكة العربية السعودية بالذكاء الاصطناعي، بما يتماشى مع رؤية 2030.',
     vision2030: '✦ متوافق مع رؤية 2030',
     quickLinks: 'روابط سريعة',
     account: 'الحساب',
@@ -287,6 +301,7 @@ const translations = {
     privacy: 'سياسة الخصوصية',
     terms: 'شروط الخدمة',
 
+    // Auth
     signInTitle: 'تسجيل الدخول',
     signUpTitle: 'إنشاء حساب',
     emailAddress: 'البريد الإلكتروني',
@@ -297,36 +312,37 @@ const translations = {
     haveAccount: 'لديك حساب بالفعل؟',
     fullName: 'الاسم الكامل',
 
+    // Planner
     planNewTrip: 'خطط لرحلة جديدة',
     step1Label: 'تفاصيل الرحلة',
     step2Label: 'التفضيلات',
-    step3Label: 'الجدول',
-    step1Sub: 'الخطوة 1 من 3: معلومات أساسية',
-    step2Sub: 'الخطوة 2 من 3: تفضيلاتك',
+    step3Label: 'الخطة',
+    step1Sub: 'الخطوة 1 من 3: معلومات الرحلة الأساسية',
+    step2Sub: 'الخطوة 2 من 3: تفضيلات الرحلة',
     destinationCity: 'مدينة الوجهة',
     searchCity: 'ابحث عن مدينة...',
-    startDate: 'تاريخ البدء',
-    endDate: 'تاريخ الانتهاء',
+    startDate: 'تاريخ البداية',
+    endDate: 'تاريخ النهاية',
     numberOfPeople: 'عدد الأشخاص',
     tripType: 'نوع الرحلة',
-    configureTrip: 'تهيئة الرحلة →',
-    tripDayCount: (n) => `📅 رحلة ${n} ${n === 1 ? 'يوم' : 'أيام'}`,
+    configureTrip: 'متابعة إعداد الرحلة',
+    tripDayCount: (n) => `📅 رحلة لمدة ${n} ${n === 1 ? 'يوم' : 'أيام'}`,
 
-    cultural: 'ثقافي وتراثي',
+    cultural: 'ثقافية وتراثية',
     adventure: 'مغامرة وطبيعة',
     relaxation: 'استرخاء وترفيه',
-    religious: 'ديني وروحاني',
+    religious: 'دينية وروحانية',
     business: 'أعمال وسياحة',
     family: 'رحلة عائلية',
 
-    budgetRange: 'نطاق الميزانية (ريال)',
+    budgetRange: 'نطاق الميزانية',
     budget: 'اقتصادي',
     midRange: 'متوسط',
     luxury: 'فاخر',
     activityLevel: 'مستوى النشاط',
-    low: 'منخفض',
+    low: 'خفيف',
     moderate: 'متوسط',
-    high: 'مرتفع',
+    high: 'مكثف',
     activityTypes: 'أنواع الأنشطة',
     selectAllInterest: 'اختر كل ما يهمك',
     sightseeing: 'معالم سياحية',
@@ -336,76 +352,60 @@ const translations = {
     natureParks: 'طبيعة وحدائق',
     sportsAdventure: 'رياضة ومغامرة',
     entertainment: 'ترفيه',
-    photography: 'تصوير',
-    accommodationType: 'نوع الإقامة',
-    budgetHotel: 'فندق اقتصادي',
-    boutiqueHotel: 'فندق بوتيك',
-    fiveStarHotel: 'فندق 5 نجوم',
-    resort: 'منتجع',
-    vacationRental: 'إيجار عطلة',
-    transportation: 'المواصلات',
-    rentalCar: 'سيارة إيجار',
-    taxiRide: 'تاكسي / أوبر',
-    publicTransport: 'مواصلات عامة',
-    privateDriver: 'سائق خاص',
-    preferredTime: 'الوقت المفضل',
-    morning: 'صباح',
-    afternoon: 'ظهر',
-    evening: 'مساء',
-    noPreference: 'لا تفضيل',
-    travelWith: 'السفر مع',
-    alone: 'بمفردي',
-    friends: 'أصدقاء',
-    familyGroup: 'عائلة',
-    familyKids: 'عائلة مع أطفال',
+    photography: 'أماكن تصوير',
     additionalNotes: 'ملاحظات إضافية',
     notesPlaceholder: 'أي متطلبات أو تفضيلات خاصة...',
-    generateItinerary: 'توليد الجدول ←',
-    back: '→ رجوع',
+    generateItinerary: 'توليد جدول الرحلة',
+    back: 'رجوع',
 
+    // Itinerary
     tripSummary: 'ملخص الرحلة',
     destinationCityLabel: 'مدينة الوجهة:',
-    startDateLabel: 'تاريخ البدء:',
-    endDateLabel: 'تاريخ الانتهاء:',
+    startDateLabel: 'تاريخ البداية:',
+    endDateLabel: 'تاريخ النهاية:',
     numberOfPeopleLabel: 'عدد الأشخاص:',
     generatePDF: 'تحميل PDF',
     saveTrip: 'حفظ الرحلة',
-    regenerate: 'إعادة التوليد',
-    backToPlanner: '→ العودة للمخطط',
+    regenerate: 'إعادة توليد الخطة',
+    backToPlanner: 'العودة للمخطط',
     openInMaps: 'فتح في الخرائط',
-    generating: 'جارٍ توليد جدولك...',
-    generatingDesc: 'الذكاء الاصطناعي يصمم رحلتك المثالية. قد يستغرق هذا لحظات.',
+    generating: 'جارٍ توليد جدول الرحلة...',
+    generatingDesc:
+      'يقوم الذكاء الاصطناعي بإعداد رحلة مناسبة لك. قد يستغرق ذلك لحظات.',
     saving: 'جارٍ الحفظ...',
     tripSaved: 'تم حفظ الرحلة بنجاح!',
     day: 'اليوم',
 
+    // Map
     mapTitle: 'خريطة الرحلة',
     allAttractions: 'جميع المعالم',
     legend: 'المفتاح',
     attractions: 'معالم',
     filterByDay: 'تصفية حسب اليوم',
-    noTripData: 'لا توجد بيانات رحلة. أنشئ جدولاً أولاً.',
+    noTripData: 'لا توجد بيانات رحلة. أنشئ جدول رحلة أولًا.',
 
+    // Profile
     myProfile: 'ملفي الشخصي',
     savedTrips: 'الرحلات المحفوظة',
-    updateProfile: 'تحديث الملف',
+    updateProfile: 'تحديث الملف الشخصي',
     noTripsYet: 'لا توجد رحلات محفوظة بعد.',
     startFirstTrip: 'ابدأ تخطيط أول رحلة',
     viewItinerary: 'عرض الجدول',
     deleteTrip: 'حذف',
-    profileUpdated: 'تم تحديث الملف!',
+    profileUpdated: 'تم تحديث الملف الشخصي!',
 
+    // Admin
     systemOverview: 'نظرة عامة على النظام',
-    activeTrips: 'رحلات نشطة',
+    activeTrips: 'الرحلات النشطة',
     aiAccuracy: 'دقة الذكاء الاصطناعي',
     newSignups: 'تسجيلات جديدة',
     totalRevenue: 'إجمالي الإيرادات',
-    analyticsTitle: 'تحليلات — الرحلات المُولَّدة',
+    analyticsTitle: 'التحليلات — الرحلات المُولَّدة',
     recentActivity: 'النشاط الأخير',
     users: 'المستخدمون',
     name: 'الاسم',
-    email: 'البريد',
-    trips_count: 'رحلات',
+    email: 'البريد الإلكتروني',
+    trips_count: 'الرحلات',
     status: 'الحالة',
     active: 'نشط',
     premium: 'مميز',
@@ -424,11 +424,15 @@ export function LanguageProvider({ children }) {
     document.documentElement.setAttribute('lang', lang)
   }, [lang])
 
-  const toggle = () => setLang(l => l === 'en' ? 'ar' : 'en')
+  const toggle = () => {
+    setLang((current) => (current === 'en' ? 'ar' : 'en'))
+  }
 
   const t = (key, ...args) => {
-    const val = translations[lang][key]
+    const val = translations[lang]?.[key] ?? translations.en[key]
+
     if (typeof val === 'function') return val(...args)
+
     return val ?? key
   }
 

@@ -6,12 +6,37 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [session, setSession] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  const fetchProfile = async (currentUser) => {
+    if (!currentUser) {
+      setProfile(null)
+      return null
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, role, created_at')
+      .eq('id', currentUser.id)
+      .single()
+
+    if (error) {
+      console.error('Fetch profile error:', error)
+      setProfile(null)
+      return null
+    }
+
+    setProfile(data)
+    return data
+  }
 
   useEffect(() => {
     let mounted = true
 
     const getInitialSession = async () => {
+      setLoading(true)
+
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -20,16 +45,32 @@ export function AuthProvider({ children }) {
 
       setSession(session)
       setUser(session?.user ?? null)
-      setLoading(false)
+
+      if (session?.user) {
+        await fetchProfile(session.user)
+      } else {
+        setProfile(null)
+      }
+
+      if (mounted) setLoading(false)
     }
 
     getInitialSession()
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setLoading(true)
+
       setSession(session)
       setUser(session?.user ?? null)
+
+      if (session?.user) {
+        await fetchProfile(session.user)
+      } else {
+        setProfile(null)
+      }
+
       setLoading(false)
     })
 
@@ -57,6 +98,7 @@ export function AuthProvider({ children }) {
             id: createdUser.id,
             full_name: fullName || '',
             email: createdUser.email,
+            role: 'user',
           },
           { onConflict: 'id' }
         )
@@ -64,14 +106,13 @@ export function AuthProvider({ children }) {
       if (profileError) throw profileError
     }
 
-    // إذا فيه session مباشرة بعد التسجيل، رجعيها
     if (data?.session) {
       setSession(data.session)
       setUser(data.session.user)
+      await fetchProfile(data.session.user)
       return data
     }
 
-    // fallback: نحاول نسجل دخول مباشرة
     const { data: signInData, error: signInError } =
       await supabase.auth.signInWithPassword({
         email,
@@ -81,6 +122,7 @@ export function AuthProvider({ children }) {
     if (!signInError && signInData?.session) {
       setSession(signInData.session)
       setUser(signInData.session.user)
+      await fetchProfile(signInData.session.user)
       return signInData
     }
 
@@ -97,6 +139,7 @@ export function AuthProvider({ children }) {
 
     setSession(data.session)
     setUser(data.user)
+    await fetchProfile(data.user)
 
     return data
   }
@@ -107,15 +150,21 @@ export function AuthProvider({ children }) {
 
     setSession(null)
     setUser(null)
+    setProfile(null)
   }
+
+  const isAdmin = profile?.role === 'admin'
 
   const value = {
     user,
     session,
+    profile,
+    isAdmin,
     loading,
     signUp,
     signIn,
     signOut,
+    fetchProfile,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -1,46 +1,21 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
+import { supabase } from '../lib/supabase'
 import { useLang } from '../context/LanguageContext'
 
-const chartData = [
-  { month: 'Jan', trips: 140 },
-  { month: 'Feb', trips: 195 },
-  { month: 'Mar', trips: 175 },
-  { month: 'Apr', trips: 280 },
-  { month: 'May', trips: 310 },
-  { month: 'Jun', trips: 430 },
-  { month: 'Jul', trips: 360 },
-]
-
-const recentActivity = [
-  { text: 'Ahmed K. Generated a 5-day Riyadh itinerary', time: '2 min ago' },
-  { text: 'Sarah M. Signed up for premium', time: '15 min ago' },
-  { text: 'Omar T. Exported PDF for Jeddah trip', time: '32 min ago' },
-  { text: 'Fatima A. Modified 3-day Al-Ula plan', time: '1 hour ago' },
-  { text: 'Khalid R. Requested regeneration for Neom trip', time: '2 hours ago' },
-]
-
-const users = [
-  { name: 'Ahmed Al-Rashid', email: 'ahmed@mail.com', trips: 5, status: 'Active' },
-  { name: 'Sarah Mohammed', email: 'sarah@mail.com', trips: 3, status: 'Active' },
-  { name: 'Omar Tariq', email: 'omar@mail.com', trips: 8, status: 'Premium' },
-  { name: 'Fatima Alhadi', email: 'fatima@mail.com', trips: 2, status: 'Active' },
-  { name: 'Khalid Rasheed', email: 'khalid@mail.com', trips: 6, status: 'Inactive' },
-]
-
-const statusColor = {
-  Active: 'bg-green-100 text-green-700',
-  Premium: 'bg-orange-100 text-orange-700',
-  Inactive: 'bg-stone-100 text-stone-500',
-}
-
-function StatCard({ icon, value, label, color }) {
+function StatCard({ icon, value, label }) {
   return (
-    <div className="card p-6 relative overflow-hidden">
-      <div
-        className="absolute top-2 end-2 w-16 h-16 rounded-full opacity-20"
-        style={{ background: color }}
-      />
-      <div className="text-2xl mb-3" style={{ color }}>{icon}</div>
+    <div className="card p-6">
+      <div className="text-2xl mb-3">{icon}</div>
       <div className="text-3xl font-bold text-stone-900 mb-1">{value}</div>
       <div className="text-sm text-stone-500">{label}</div>
     </div>
@@ -48,86 +23,208 @@ function StatCard({ icon, value, label, color }) {
 }
 
 export default function Admin() {
-  const { t } = useLang()
+  const { lang } = useLang()
+  const isArabic = lang === 'ar'
+
+  const text = {
+    title: isArabic ? 'لوحة تحكم الأدمن' : 'Admin Dashboard',
+    subtitle: isArabic
+      ? 'نظرة عامة على نشاط نظام شواف.'
+      : 'Visual overview of Shawaf system activity.',
+    refresh: isArabic ? 'تحديث' : 'Refresh',
+    totalUsers: isArabic ? 'إجمالي المستخدمين' : 'Total Users',
+    savedTrips: isArabic ? 'الرحلات المحفوظة' : 'Saved Trips',
+    attractions: isArabic ? 'المعالم' : 'Attractions',
+    pendingReports: isArabic ? 'البلاغات المعلقة' : 'Pending Reports',
+    monthlyTrips: isArabic ? 'الرحلات الشهرية' : 'Monthly Trips Overview',
+    trips: isArabic ? 'رحلات' : 'Trips',
+    noData: isArabic ? 'لا توجد بيانات' : 'No Data',
+    quickActions: isArabic ? 'إجراءات سريعة' : 'Quick Actions',
+    manageAttractions: isArabic ? 'إدارة المعالم' : 'Manage Attractions',
+    manageAttractionsDesc: isArabic
+      ? 'إضافة أو تعديل أو تعطيل الأماكن السياحية.'
+      : 'Add, edit, or disable tourist attractions.',
+    userReports: isArabic ? 'بلاغات المستخدمين' : 'User Reports',
+    userReportsDesc: isArabic
+      ? 'مراجعة البلاغات وتحديث حالتها.'
+      : 'Review reports and update their status.',
+    analytics: isArabic ? 'التحليلات' : 'Analytics',
+    analyticsDesc: isArabic
+      ? 'عرض الرسوم البيانية والإحصاءات.'
+      : 'View charts and system statistics.',
+    open: isArabic ? 'فتح' : 'Open',
+  }
+
+  const [stats, setStats] = useState({
+    users: 0,
+    trips: 0,
+    attractions: 0,
+    reports: 0,
+  })
+
+  const [chartData, setChartData] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadStats()
+  }, [])
+
+  const loadStats = async () => {
+    setLoading(true)
+
+    const [
+      profilesRes,
+      tripsRes,
+      attractionsRes,
+      reportsRes,
+      tripsListRes,
+    ] = await Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('trips').select('id', { count: 'exact', head: true }),
+      supabase.from('attractions').select('id', { count: 'exact', head: true }),
+      supabase
+        .from('user_reports')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending'),
+      supabase
+        .from('trips')
+        .select('created_at')
+        .order('created_at', { ascending: true }),
+    ])
+
+    setStats({
+      users: profilesRes.count || 0,
+      trips: tripsRes.count || 0,
+      attractions: attractionsRes.count || 0,
+      reports: reportsRes.count || 0,
+    })
+
+    const monthCounts = {}
+
+    ;(tripsListRes.data || []).forEach((trip) => {
+      const date = new Date(trip.created_at)
+
+      const month = date.toLocaleString(isArabic ? 'ar-SA' : 'en', {
+        month: 'short',
+      })
+
+      monthCounts[month] = (monthCounts[month] || 0) + 1
+    })
+
+    const data = Object.entries(monthCounts).map(([month, trips]) => ({
+      month,
+      trips,
+    }))
+
+    setChartData(data.length ? data : [{ month: text.noData, trips: 0 }])
+    setLoading(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  const actionCards = [
+    {
+      title: text.manageAttractions,
+      desc: text.manageAttractionsDesc,
+      icon: '📍',
+      to: '/admin/attractions',
+    },
+    {
+      title: text.userReports,
+      desc: text.userReportsDesc,
+      icon: '📝',
+      to: '/admin/reports',
+    },
+    {
+      title: text.analytics,
+      desc: text.analyticsDesc,
+      icon: '📊',
+      to: '/admin/analytics',
+    },
+  ]
 
   return (
     <div className="py-10 px-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold text-stone-900 mb-8">{t('systemOverview')}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-900">
+            {text.title}
+          </h1>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon="📍" value="1,284" label={t('activeTrips')} color="#3B82F6" />
-        <StatCard icon="📈" value="98.2%" label={t('aiAccuracy')} color="#10B981" />
-        <StatCard icon="👥" value="450" label={t('newSignups')} color="#F97316" />
-        <StatCard icon="💵" value="$128,400" label={t('totalRevenue')} color="#8B5CF6" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Chart */}
-        <div className="lg:col-span-2 card p-6">
-          <h2 className="font-semibold text-stone-900 mb-6">{t('analyticsTitle')}</h2>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={chartData} barSize={36}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
-              <Tooltip
-                contentStyle={{ borderRadius: 8, border: '1px solid #e7e5e4', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
-              />
-              <Bar dataKey="trips" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <p className="text-sm text-stone-500 mt-1">
+            {text.subtitle}
+          </p>
         </div>
 
-        {/* Recent activity */}
-        <div className="card p-6">
-          <h2 className="font-semibold text-stone-900 mb-4">{t('recentActivity')}</h2>
-          <div className="space-y-4">
-            {recentActivity.map((item, i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-sm text-stone-700 leading-tight">{item.text}</p>
-                  <p className="text-xs text-stone-400 mt-1">{item.time}</p>
-                </div>
-              </div>
-            ))}
+        <button onClick={loadStats} className="btn-outline">
+          {text.refresh}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        <StatCard icon="👥" value={stats.users} label={text.totalUsers} />
+        <StatCard icon="🧳" value={stats.trips} label={text.savedTrips} />
+        <StatCard icon="📍" value={stats.attractions} label={text.attractions} />
+        <StatCard icon="📝" value={stats.reports} label={text.pendingReports} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="card p-6 lg:col-span-2">
+          <h2 className="font-semibold text-stone-900 mb-5">
+            {text.monthlyTrips}
+          </h2>
+
+          <div className="h-72" dir="ltr">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                <XAxis dataKey="month" stroke="#78716c" />
+                <YAxis stroke="#78716c" />
+                <Tooltip />
+                <Bar dataKey="trips" fill="#f97316" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
-      </div>
 
-      {/* Users table */}
-      <div className="card p-6">
-        <h2 className="font-semibold text-stone-900 mb-4">{t('users')}</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-start text-stone-500 border-b border-stone-100">
-                <th className="text-start pb-3 font-medium">{t('name')}</th>
-                <th className="text-start pb-3 font-medium">{t('email')}</th>
-                <th className="text-start pb-3 font-medium">{t('trips_count')}</th>
-                <th className="text-start pb-3 font-medium">{t('status')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user, i) => (
-                <tr key={i} className="border-b border-stone-50 last:border-0">
-                  <td className="py-3.5 font-medium text-stone-900">{user.name}</td>
-                  <td className="py-3.5 text-stone-500">{user.email}</td>
-                  <td className="py-3.5 text-stone-700">{user.trips}</td>
-                  <td className="py-3.5">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor[user.status]}`}>
-                      {user.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="card p-6">
+          <h2 className="font-semibold text-stone-900 mb-5">
+            {text.quickActions}
+          </h2>
+
+          <div className="space-y-3">
+            {actionCards.map((action) => (
+              <Link
+                key={action.to}
+                to={action.to}
+                className="block border border-stone-200 rounded-2xl p-4 hover:border-orange-300 hover:bg-orange-50/40 transition-all"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">{action.icon}</div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-stone-900 text-sm">
+                      {action.title}
+                    </div>
+
+                    <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                      {action.desc}
+                    </p>
+
+                    <div className="text-xs text-orange-600 font-medium mt-2">
+                      {text.open} →
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </div>

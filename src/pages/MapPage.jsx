@@ -1,36 +1,87 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import L from 'leaflet'
 import { useLang } from '../context/LanguageContext'
 
-// Approximate coordinates for major Saudi cities
 const CITY_COORDS = {
-  'Riyadh':   [24.6877, 46.7219],
-  'Jeddah':   [21.4858, 39.1925],
-  'Mecca':    [21.3891, 39.8579],
-  'Medina':   [24.5247, 39.5692],
-  'Dammam':   [26.4207, 50.0888],
-  'Al-Ula':   [26.6239, 37.9216],
-  'NEOM':     [28.0339, 35.1389],
-  'Abha':     [18.2164, 42.5053],
-  'Taif':     [21.2854, 40.4146],
-  'Yanbu':    [24.0895, 38.0618],
-  'Tabuk':    [28.3838, 36.5550],
-  'Hail':     [27.5114, 41.6906],
-  'Najran':   [17.4924, 44.1277],
-  'Jizan':    [16.8892, 42.5511],
-  'Al-Ahsa':  [25.3831, 49.5867],
+  Riyadh: [24.7136, 46.6753],
+  Jeddah: [21.4858, 39.1925],
+  Mecca: [21.3891, 39.8579],
+  Medina: [24.5247, 39.5692],
+  Dammam: [26.4207, 50.0888],
+  'Al-Khobar': [26.2172, 50.1971],
+  Dhahran: [26.2361, 50.0393],
+  'Al-Ahsa': [25.3831, 49.5867],
+  'Al-Ula': [26.6085, 37.9232],
+  NEOM: [28.0339, 35.1389],
+  Abha: [18.2164, 42.5053],
+  Taif: [21.2854, 40.426],
+  Yanbu: [24.0895, 38.0618],
+  Tabuk: [28.3835, 36.5662],
+  Hail: [27.5114, 41.7208],
+  Najran: [17.5656, 44.2289],
+  Jizan: [16.8892, 42.5511],
+  Diriyah: [24.737, 46.5752],
+  Buraidah: [26.3592, 43.9818],
+  Jubail: [27.0046, 49.646],
+  'Al-Baha': [20.0129, 41.4677],
+  Sakaka: [29.9697, 40.2064],
+  'Hafar Al-Batin': [28.4328, 45.9708],
+  KAEC: [22.4057, 39.0811],
+}
+
+const CITY_LABELS_AR = {
+  Riyadh: 'الرياض',
+  Jeddah: 'جدة',
+  Mecca: 'مكة',
+  Medina: 'المدينة المنورة',
+  Dammam: 'الدمام',
+  'Al-Khobar': 'الخبر',
+  Dhahran: 'الظهران',
+  'Al-Ahsa': 'الأحساء',
+  'Al-Ula': 'العلا',
+  NEOM: 'نيوم',
+  Abha: 'أبها',
+  Taif: 'الطائف',
+  Yanbu: 'ينبع',
+  Tabuk: 'تبوك',
+  Hail: 'حائل',
+  Najran: 'نجران',
+  Jizan: 'جازان',
+  Diriyah: 'الدرعية',
+  Buraidah: 'بريدة',
+  Jubail: 'الجبيل',
+  'Al-Baha': 'الباحة',
+  Sakaka: 'سكاكا',
+  'Hafar Al-Batin': 'حفر الباطن',
+  KAEC: 'مدينة الملك عبدالله الاقتصادية',
 }
 
 const CATEGORY_COLORS = {
-  Landmark:    '#3B82F6',
-  Museum:      '#8B5CF6',
-  Historical:  '#F97316',
-  Heritage:    '#10B981',
+  Landmark: '#3B82F6',
+  Museum: '#8B5CF6',
+  Historical: '#F97316',
+  Heritage: '#10B981',
   Entertainment: '#EC4899',
-  Shopping:    '#F59E0B',
-  Culture:     '#6366F1',
-  Outdoor:     '#14B8A6',
-  Natural:     '#22C55E',
+  Shopping: '#F59E0B',
+  Culture: '#6366F1',
+  Outdoor: '#14B8A6',
+  Natural: '#22C55E',
+  Restaurant: '#EF4444',
+}
+
+const CATEGORY_LABELS_AR = {
+  Landmark: 'معلم',
+  Museum: 'متحف',
+  Historical: 'تاريخي',
+  Heritage: 'تراثي',
+  Entertainment: 'ترفيه',
+  Shopping: 'تسوق',
+  Culture: 'ثقافة',
+  Outdoor: 'خارجي',
+  Natural: 'طبيعة',
+  Restaurant: 'مطعم',
 }
 
 const LEGEND = [
@@ -43,121 +94,244 @@ const LEGEND = [
   { type: 'Culture', color: '#6366F1' },
   { type: 'Outdoor', color: '#14B8A6' },
   { type: 'Natural', color: '#22C55E' },
+  { type: 'Restaurant', color: '#EF4444' },
 ]
 
+function isInsideSaudi(lat, lng) {
+  return lat >= 16 && lat <= 33 && lng >= 34 && lng <= 56
+}
+
+function getCityLabel(city, lang) {
+  if (!city) return ''
+  return lang === 'ar' ? CITY_LABELS_AR[city] || city : city
+}
+
+function getCategoryLabel(category, lang) {
+  if (!category) return ''
+  return lang === 'ar' ? CATEGORY_LABELS_AR[category] || category : category
+}
+
+function getStationName(station, lang = 'en') {
+  if (lang === 'ar') {
+    return (
+      station?.name_ar ||
+      station?.arabic_name ||
+      station?.place_name_ar ||
+      station?.title_ar ||
+      station?.name ||
+      station?.place_name ||
+      station?.place ||
+      station?.title ||
+      'معلم'
+    )
+  }
+
+  return (
+    station?.name ||
+    station?.place_name ||
+    station?.place ||
+    station?.title ||
+    'Attraction'
+  )
+}
+
+function getStationDescription(station, lang = 'en') {
+  if (lang === 'ar') {
+    return (
+      station?.description_ar ||
+      station?.arabic_description ||
+      station?.desc_ar ||
+      station?.description ||
+      station?.desc ||
+      ''
+    )
+  }
+
+  return station?.description || station?.desc || ''
+}
+
+function getStationLat(station) {
+  const value = station?.lat ?? station?.latitude
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
+function getStationLng(station) {
+  const value = station?.lng ?? station?.longitude
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
+function hasCoordinates(station) {
+  const lat = getStationLat(station)
+  const lng = getStationLng(station)
+
+  if (lat === null || lng === null) return false
+  return isInsideSaudi(lat, lng)
+}
+
+function buildGoogleMapsUrl(station) {
+  const lat = getStationLat(station)
+  const lng = getStationLng(station)
+
+  if (lat !== null && lng !== null && isInsideSaudi(lat, lng)) {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+  }
+
+  const name = encodeURIComponent(
+    station?.name || station?.place_name || station?.place || station?.title || 'Attraction'
+  )
+
+  return `https://www.google.com/maps/search/?api=1&query=${name}`
+}
+
+function createNumberIcon(number, category) {
+  const color = CATEGORY_COLORS[category] || '#EA580C'
+
+  return L.divIcon({
+    html: `
+      <div style="
+        width:32px;
+        height:32px;
+        background:${color};
+        border-radius:50%;
+        border:3px solid white;
+        box-shadow:0 2px 6px rgba(0,0,0,0.3);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        color:white;
+        font-weight:bold;
+        font-size:13px;
+      ">
+        ${number}
+      </div>
+    `,
+    className: '',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  })
+}
+
+function FitMapToMarkers({ stations, city }) {
+  const map = useMap()
+
+  useEffect(() => {
+    setTimeout(() => {
+      map.invalidateSize()
+
+      const validPositions = stations
+        .map((station) => [getStationLat(station), getStationLng(station)])
+        .filter(([lat, lng]) => lat !== null && lng !== null && isInsideSaudi(lat, lng))
+
+      if (validPositions.length > 0) {
+        const bounds = L.latLngBounds(validPositions)
+
+        map.fitBounds(bounds, {
+          padding: [50, 50],
+          maxZoom: 14,
+        })
+      } else {
+        const center = CITY_COORDS[city] || CITY_COORDS.Riyadh
+        map.setView(center, 11)
+      }
+    }, 200)
+  }, [map, stations, city])
+
+  return null
+}
+
 export default function MapPage() {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const navigate = useNavigate()
-  const mapRef = useRef(null)
-  const mapInstanceRef = useRef(null)
-  const markersRef = useRef([])
 
   const [tripData, setTripData] = useState(null)
   const [plan, setPlan] = useState(null)
   const [selectedDay, setSelectedDay] = useState('all')
-  const [mapReady, setMapReady] = useState(false)
 
-  // Load trip from sessionStorage
+  const isArabic = lang === 'ar'
+
+  const text = {
+    mapped: isArabic ? 'معالم على الخريطة' : 'mapped',
+    withoutCoordinates: isArabic ? 'بدون إحداثيات' : 'without coordinates',
+    daySingular: isArabic ? 'يوم' : 'day',
+    dayPlural: isArabic ? 'أيام' : 'days',
+    openInGoogleMaps: isArabic ? 'فتح في خرائط Google' : 'Open in Google Maps',
+    missingCoordinates: isArabic ? 'إحداثيات مفقودة أو غير صحيحة' : 'Missing or invalid coordinates',
+    mapProvider: isArabic
+      ? 'Leaflet / OpenStreetMap · تفتح خرائط Google خارجيًا'
+      : 'Leaflet / OpenStreetMap · Google Maps opens externally',
+  }
+
   useEffect(() => {
     const stored = sessionStorage.getItem('currentTrip')
+
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
         setTripData(parsed.tripData)
         setPlan(parsed.plan)
-      } catch (_) {}
-    }
-  }, [])
-
-  // Init Leaflet map
-  useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return
-
-    import('leaflet').then(L => {
-      const city = tripData?.city || 'Riyadh'
-      const center = CITY_COORDS[city] || [24.6877, 46.7219]
-
-      const map = L.map(mapRef.current).setView(center, 12)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-      }).addTo(map)
-
-      mapInstanceRef.current = map
-      setMapReady(true)
-    })
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove()
-        mapInstanceRef.current = null
+      } catch (error) {
+        console.error('Failed to load current trip:', error)
       }
     }
-  }, [tripData])
-
-  // Draw markers when plan/day filter changes
-  useEffect(() => {
-    if (!mapReady || !mapInstanceRef.current || !plan) return
-
-    import('leaflet').then(L => {
-      // Clear old markers
-      markersRef.current.forEach(m => m.remove())
-      markersRef.current = []
-
-      const itinerary = plan.itinerary || plan.days || []
-      const city = tripData?.city || 'Riyadh'
-      const cityCenter = CITY_COORDS[city] || [24.6877, 46.7219]
-      let num = 0
-
-      itinerary.forEach((day, di) => {
-        if (selectedDay !== 'all' && di + 1 !== Number(selectedDay)) return
-        const stations = day.stations || day.activities || []
-        stations.forEach((station) => {
-          num++
-          // Use provided coords or generate slight offset from city center
-          const lat = station.lat || (cityCenter[0] + (Math.random() - 0.5) * 0.06)
-          const lng = station.lng || (cityCenter[1] + (Math.random() - 0.5) * 0.06)
-
-          const color = CATEGORY_COLORS[station.category] || '#EA580C'
-          const icon = L.divIcon({
-            html: `<div style="width:32px;height:32px;background:${color};border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:13px;">${num}</div>`,
-            className: '',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16],
-          })
-
-          const marker = L.marker([lat, lng], { icon })
-            .addTo(mapInstanceRef.current)
-            .bindPopup(`
-              <div style="min-width:180px">
-                <div style="font-weight:600;font-size:14px;margin-bottom:4px">${station.name || station.place || station.title || ''}</div>
-                ${station.time ? `<div style="color:#ea580c;font-size:12px;margin-bottom:4px">${station.time}</div>` : ''}
-                <div style="color:#666;font-size:12px">${station.description || ''}</div>
-                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((station.name || '') + ', ' + city + ', Saudi Arabia')}" target="_blank" style="color:#ea580c;font-size:12px;display:block;margin-top:6px">📍 Open in Google Maps</a>
-              </div>
-            `)
-          markersRef.current.push(marker)
-        })
-      })
-    })
-  }, [mapReady, plan, selectedDay, tripData])
+  }, [])
 
   const itinerary = plan?.itinerary || plan?.days || []
   const days = itinerary.length
 
-  // Flat list of attractions for sidebar
-  const allStations = itinerary.flatMap((day, di) =>
-    (day.stations || day.activities || []).map(s => ({
-      ...s,
-      dayNum: di + 1,
-      time: s.time || '',
-    }))
-  ).filter(s => selectedDay === 'all' || s.dayNum === Number(selectedDay))
+  const selectedCities =
+    plan?.cities?.length
+      ? plan.cities
+      : tripData?.cities?.length
+      ? tripData.cities
+      : tripData?.city
+      ? [tripData.city]
+      : []
+
+  const cityDisplay = selectedCities.length
+    ? selectedCities.map((city) => getCityLabel(city, lang)).join(isArabic ? ' ← ' : ' → ')
+    : getCityLabel(tripData?.city || plan?.city || 'Riyadh', lang)
+
+  const primaryCity = selectedCities[0] || tripData?.city || plan?.city || 'Riyadh'
+  const center = CITY_COORDS[primaryCity] || CITY_COORDS.Riyadh
+
+  const allStations = useMemo(() => {
+    return itinerary
+      .flatMap((day, dayIndex) => {
+        const stations = day.stations || day.activities || []
+        const dayCity = day?.city || selectedCities[dayIndex] || primaryCity
+
+        return stations.map((station, stationIndex) => ({
+          ...station,
+          dayNum: dayIndex + 1,
+          stationNum: stationIndex + 1,
+          dayCity,
+          displayName: getStationName(station, lang),
+          displayDescription: getStationDescription(station, lang),
+          displayCategory: getCategoryLabel(station.category, lang),
+        }))
+      })
+      .filter((station) => selectedDay === 'all' || station.dayNum === Number(selectedDay))
+  }, [itinerary, selectedDay, selectedCities, primaryCity, lang])
+
+  const mappedStations = allStations.filter(hasCoordinates)
+
+  const missingCoordinateStations = allStations.filter((station) => {
+    const lat = getStationLat(station)
+    const lng = getStationLng(station)
+
+    if (lat === null || lng === null) return true
+    return !isInsideSaudi(lat, lng)
+  })
 
   if (!plan) {
     return (
       <div className="py-20 px-4 text-center">
         <div className="text-6xl mb-4">🗺️</div>
-        <h2 className="text-xl font-bold text-stone-900 mb-2">{t('noTripData')}</h2>
+        <h2 className="text-xl font-bold text-stone-900 mb-2">
+          {t('noTripData')}
+        </h2>
         <button onClick={() => navigate('/planner')} className="btn-primary mt-4">
           {t('tripPlanner')}
         </button>
@@ -166,17 +340,26 @@ export default function MapPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex">
-      {/* Left sidebar */}
-      <div className="w-72 flex-shrink-0 bg-white border-e border-stone-200 overflow-y-auto p-4 space-y-4">
+    <div className="h-[calc(100vh-64px)] flex bg-stone-100">
+      <div className="w-72 flex-shrink-0 bg-white border-e border-stone-200 overflow-y-auto p-4 space-y-4 z-10">
         <div>
           <h2 className="font-bold text-stone-900 text-lg">{t('mapTitle')}</h2>
-          <p className="text-sm text-stone-500">{tripData?.city} · {days} {days === 1 ? 'day' : 'days'}</p>
+
+          <p className="text-sm text-stone-500" dir="auto">
+            {cityDisplay} · {days} {days === 1 ? text.daySingular : text.dayPlural}
+          </p>
+
+          <p className="text-xs text-stone-400 mt-1">
+            {mappedStations.length} {text.mapped} · {missingCoordinateStations.length}{' '}
+            {text.withoutCoordinates}
+          </p>
         </div>
 
-        {/* Day filter */}
         <div className="card p-4">
-          <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3">{t('filterByDay')}</h3>
+          <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3">
+            {t('filterByDay')}
+          </h3>
+
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedDay('all')}
@@ -188,72 +371,196 @@ export default function MapPage() {
             >
               {t('allAttractions')}
             </button>
-            {Array.from({ length: days }, (_, i) => i + 1).map(d => (
-              <button
-                key={d}
-                onClick={() => setSelectedDay(d)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                  selectedDay === d
-                    ? 'bg-orange-500 text-white border-orange-500'
-                    : 'border-stone-200 text-stone-600 hover:border-orange-300'
-                }`}
-              >
-                {t('day')} {d}
-              </button>
-            ))}
+
+            {Array.from({ length: days }, (_, index) => index + 1).map((day) => {
+              const dayData = itinerary[day - 1]
+              const dayCity = dayData?.city || selectedCities[day - 1] || ''
+              const dayCityLabel = getCityLabel(dayCity, lang)
+
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelectedDay(day)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                    selectedDay === day
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'border-stone-200 text-stone-600 hover:border-orange-300'
+                  }`}
+                >
+                  {t('day')} {day}
+                  {dayCityLabel ? ` (${dayCityLabel})` : ''}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        {/* Legend */}
         <div className="card p-4">
-          <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3">{t('legend')}</h3>
+          <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3">
+            {t('legend')}
+          </h3>
+
           <div className="space-y-1.5">
             {LEGEND.map(({ type, color }) => (
               <div key={type} className="flex items-center gap-2 text-xs text-stone-600">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: color }} />
-                {type}
+                <div
+                  className="w-3 h-3 rounded-full flex-shrink-0"
+                  style={{ background: color }}
+                />
+
+                <span dir="auto">{getCategoryLabel(type, lang)}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Attractions list */}
         <div className="card p-4">
           <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3">
             {allStations.length} {t('attractions')}
           </h3>
+
           <div className="space-y-3">
-            {allStations.map((s, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-                  {i + 1}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-medium text-stone-800 text-xs leading-tight truncate">
-                    {s.name || s.place || s.title}
+            {allStations.map((station, index) => {
+              const hasCoords = hasCoordinates(station)
+              const dayCityLabel = getCityLabel(station.dayCity, lang)
+
+              return (
+                <div key={`${station.dayNum}-${index}`} className="flex items-start gap-2.5">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                      hasCoords
+                        ? 'bg-orange-100 text-orange-600'
+                        : 'bg-stone-100 text-stone-400'
+                    }`}
+                  >
+                    {index + 1}
                   </div>
-                  <div className="text-xs text-stone-400 mt-0.5">
-                    {t('day')} {s.dayNum}{s.time ? ` · ${s.time}` : ''}
+
+                  <div className="min-w-0 flex-1">
+                    <div
+                      className="font-medium text-stone-800 text-xs leading-tight"
+                      dir="auto"
+                    >
+                      {station.displayName}
+                    </div>
+
+                    <div className="text-xs text-stone-400 mt-0.5" dir="auto">
+                      {t('day')} {station.dayNum}
+                      {dayCityLabel ? ` (${dayCityLabel})` : ''}
+                      {station.time ? ` · ${station.time}` : ''}
+                    </div>
+
+                    {station.displayCategory && (
+                      <div className="text-xs text-stone-400 mt-0.5" dir="auto">
+                        {station.displayCategory}
+                      </div>
+                    )}
+
+                    {hasCoords ? (
+                      <a
+                        href={buildGoogleMapsUrl(station)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-orange-500 hover:text-orange-700 mt-1 inline-block"
+                      >
+                        {text.openInGoogleMaps}
+                      </a>
+                    ) : (
+                      <div className="text-xs text-red-400 mt-1">
+                        {text.missingCoordinates}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>
 
-      {/* Map area */}
-      <div className="flex-1 flex flex-col">
-        {/* Map toolbar */}
-        <div className="bg-white border-b border-stone-200 px-4 py-2 flex items-center gap-2">
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="bg-white border-b border-stone-200 px-4 py-2 flex items-center justify-between gap-2 z-10">
           <button className="flex items-center gap-1.5 bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium">
-            🗺️ Map
+            🗺️ {t('map')}
           </button>
-          <button className="flex items-center gap-1.5 border border-stone-200 text-stone-600 px-3 py-1.5 rounded-lg text-sm hover:border-stone-400 transition-colors">
-            🛰️ Satellite
-          </button>
+
+          <div className="text-xs text-stone-400">
+            {text.mapProvider}
+          </div>
         </div>
-        <div ref={mapRef} className="flex-1" style={{ minHeight: 0 }} />
+
+        <div className="flex-1 min-h-0 relative" dir="ltr">
+          <MapContainer
+            center={center}
+            zoom={11}
+            scrollWheelZoom
+            className="absolute inset-0 z-0"
+            style={{
+              height: '100%',
+              width: '100%',
+              borderRadius: 0,
+            }}
+          >
+            <TileLayer
+              attribution="© OpenStreetMap contributors"
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+
+            <FitMapToMarkers stations={mappedStations} city={primaryCity} />
+
+            {mappedStations.map((station, index) => {
+              const lat = getStationLat(station)
+              const lng = getStationLng(station)
+              const dayCityLabel = getCityLabel(station.dayCity, lang)
+
+              return (
+                <Marker
+                  key={`${station.dayNum}-${index}-${station.displayName}`}
+                  position={[lat, lng]}
+                  icon={createNumberIcon(index + 1, station.category)}
+                >
+                  <Popup>
+                    <div className="min-w-[200px]" dir={isArabic ? 'rtl' : 'ltr'}>
+                      <div className="font-semibold text-sm mb-1" dir="auto">
+                        {station.displayName}
+                      </div>
+
+                      <div className="text-xs text-stone-500 mb-1" dir="auto">
+                        {t('day')} {station.dayNum}
+                        {dayCityLabel ? ` (${dayCityLabel})` : ''}
+                      </div>
+
+                      {station.time && (
+                        <div className="text-xs text-orange-600 mb-1">
+                          {station.time}
+                        </div>
+                      )}
+
+                      {station.displayCategory && (
+                        <div className="text-xs text-stone-500 mb-1" dir="auto">
+                          {station.displayCategory}
+                        </div>
+                      )}
+
+                      <div className="text-xs text-stone-600 leading-relaxed" dir="auto">
+                        {station.displayDescription}
+                      </div>
+
+                      <a
+                        href={buildGoogleMapsUrl(station)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-orange-600 mt-2 inline-block"
+                      >
+                        📍 {text.openInGoogleMaps}
+                      </a>
+                    </div>
+                  </Popup>
+                </Marker>
+              )
+            })}
+          </MapContainer>
+        </div>
       </div>
     </div>
   )
