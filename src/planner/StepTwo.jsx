@@ -42,9 +42,10 @@ function daysBetween(start, end) {
 
 function Section({ icon, title, children }) {
   return (
-    <div className="card p-6 mb-4">
-      <h3 className="flex items-center gap-2 font-semibold text-stone-900 text-base mb-4">
-        <span className="text-orange-500">{icon}</span> {title}
+    <div className="card p-5 sm:p-6 mb-4">
+      <h3 className="flex items-center gap-2 font-semibold text-[#333333] text-base mb-4" dir="auto">
+        <span className="text-[#006A4E]">{icon}</span>
+        {title}
       </h3>
       {children}
     </div>
@@ -77,7 +78,7 @@ function LoadingExperience({ isArabic }) {
   }, [messages.length])
 
   return (
-    <div className="card p-8 text-center overflow-hidden relative">
+    <div className="card p-6 sm:p-8 text-center overflow-hidden relative">
       <div className="absolute inset-x-0 top-10 h-20 pointer-events-none">
         <div className="animate-[fly_3.2s_ease-in-out_infinite] text-4xl">
           ✈️
@@ -104,23 +105,23 @@ function LoadingExperience({ isArabic }) {
           <span className="animate-bounce [animation-delay:450ms]">☕</span>
         </div>
 
-        <h3 className="text-xl font-bold text-stone-900 mb-2">
+        <h3 className="text-xl font-bold text-[#333333] mb-2" dir="auto">
           {isArabic ? 'جاري توليد خطة الرحلة' : 'Generating Your Itinerary'}
         </h3>
 
-        <p className="text-sm text-stone-500 max-w-md mx-auto leading-relaxed min-h-[44px]">
+        <p className="text-sm text-stone-500 max-w-md mx-auto leading-relaxed min-h-[44px]" dir="auto">
           {messages[messageIndex]}
         </p>
 
         <div className="mt-6 flex justify-center">
           <div className="flex gap-2">
-            <span className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse" />
-            <span className="w-2.5 h-2.5 bg-orange-400 rounded-full animate-pulse [animation-delay:200ms]" />
-            <span className="w-2.5 h-2.5 bg-orange-300 rounded-full animate-pulse [animation-delay:400ms]" />
+            <span className="w-2.5 h-2.5 bg-[#006A4E] rounded-full animate-pulse" />
+            <span className="w-2.5 h-2.5 bg-[#D4AF37] rounded-full animate-pulse [animation-delay:200ms]" />
+            <span className="w-2.5 h-2.5 bg-[#006A4E]/50 rounded-full animate-pulse [animation-delay:400ms]" />
           </div>
         </div>
 
-        <div className="mt-6 bg-orange-50 border border-orange-100 rounded-2xl px-4 py-3 text-xs text-orange-700">
+        <div className="mt-6 bg-[#FBF6E3] border border-[#D4AF37]/40 rounded-2xl px-4 py-3 text-xs text-[#6B571B]" dir="auto">
           {isArabic
             ? 'قد يستغرق ذلك عدة ثوانٍ لأن شواف يختار الأماكن المناسبة ويوازن بين المدن والوقت.'
             : 'This may take a few seconds while Shawaf balances places, cities, and timing.'}
@@ -207,6 +208,7 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
         numberOfPeople: data.numberOfPeople,
         accommodation: 'Not specified',
         tripType: data.tripType || 'Leisure',
+        lang,
       }
 
       const response = await fetch(
@@ -277,49 +279,51 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
   }
 
   return (
-    <div>
-      <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 mb-4">
-        <h3 className="flex items-center gap-2 font-semibold text-orange-700 mb-3">
+    <div className="w-full overflow-hidden">
+      <div className="bg-[#E6F2EE] border border-[#D4AF37]/40 rounded-2xl p-4 sm:p-5 mb-4">
+        <h3 className="flex items-center gap-2 font-semibold text-[#006A4E] mb-3" dir="auto">
           <span>🗺️</span> {t('tripSummary')}
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
           <div className="sm:col-span-2">
             <span className="text-stone-500">{t('destinationCityLabel')}</span>{' '}
-            <strong dir="auto">{cityDisplay}</strong>
+            <strong className="text-[#333333]" dir="auto">
+              {cityDisplay}
+            </strong>
           </div>
 
           <div>
             <span className="text-stone-500">{t('startDateLabel')}</span>{' '}
-            <strong>{data.startDate}</strong>
+            <strong className="text-[#333333]">{data.startDate}</strong>
           </div>
 
           <div>
             <span className="text-stone-500">{t('endDateLabel')}</span>{' '}
-            <strong>{data.endDate}</strong>
+            <strong className="text-[#333333]">{data.endDate}</strong>
           </div>
 
           <div>
             <span className="text-stone-500">{t('numberOfPeopleLabel')}</span>{' '}
-            <strong>{data.numberOfPeople}</strong>
+            <strong className="text-[#333333]">{data.numberOfPeople}</strong>
           </div>
 
           <div>
             <span className="text-stone-500">{text.days}:</span>{' '}
-            <strong>{days}</strong>
+            <strong className="text-[#333333]">{days}</strong>
           </div>
         </div>
 
         {selectedCities.length > 1 && (
-          <div className="mt-3 text-xs text-orange-700 bg-white border border-orange-100 rounded-xl px-3 py-2">
+          <div className="mt-3 text-xs text-[#006A4E] bg-white border border-[#D4AF37]/35 rounded-xl px-3 py-2" dir="auto">
             {text.multiCityRoute}{' '}
-            <strong dir="auto">{cityDisplay}</strong>
+            <strong>{cityDisplay}</strong>
           </div>
         )}
       </div>
 
       <Section icon="💵" title={t('budgetRange')}>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {budgets.map((b) => (
             <SelectionCard
               key={b.key}
@@ -339,7 +343,7 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
       </Section>
 
       <Section icon="⚡" title={t('activityLevel')}>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {levels.map((l) => (
             <SelectionCard
               key={l.key}
@@ -353,9 +357,11 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
       </Section>
 
       <Section icon="🎯" title={t('activityTypes')}>
-        <p className="text-xs text-stone-400 mb-3">{t('selectAllInterest')}</p>
+        <p className="text-xs text-stone-400 mb-3" dir="auto">
+          {t('selectAllInterest')}
+        </p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {activityTypes.map((a) => (
             <SelectionCard
               key={a.key}
@@ -368,9 +374,9 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
         </div>
       </Section>
 
-      <div className="card p-6 mb-4">
-        <h3 className="flex items-center gap-2 font-semibold text-stone-900 text-base mb-3">
-          <span className="text-orange-500">📝</span> {t('additionalNotes')}
+      <div className="card p-5 sm:p-6 mb-4">
+        <h3 className="flex items-center gap-2 font-semibold text-[#333333] text-base mb-3" dir="auto">
+          <span className="text-[#006A4E]">📝</span> {t('additionalNotes')}
         </h3>
 
         <textarea
@@ -378,23 +384,24 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
           placeholder={t('notesPlaceholder')}
           value={data.notes || ''}
           onChange={(e) => onChange({ notes: e.target.value })}
+          dir="auto"
         />
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4" dir="auto">
           {error}
         </div>
       )}
 
       {!canGenerate && (
-        <div className="bg-orange-50 border border-orange-100 text-orange-700 px-4 py-3 rounded-xl text-sm mb-4">
+        <div className="bg-[#FBF6E3] border border-[#D4AF37]/40 text-[#6B571B] px-4 py-3 rounded-xl text-sm mb-4" dir="auto">
           {text.validation}
         </div>
       )}
 
-      <div className="flex gap-3">
-        <button onClick={onBack} className="btn-outline flex-shrink-0">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button onClick={onBack} className="btn-outline sm:flex-shrink-0 justify-center">
           {t('back')}
         </button>
 

@@ -101,12 +101,6 @@ function HeroSection() {
           ))}
         </div>
       </div>
-
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-[#D4AF37]/50 rounded-full flex items-start justify-center pt-1.5">
-          <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full" />
-        </div>
-      </div>
     </section>
   )
 }
@@ -338,5 +332,5 @@ export default function Home() {
       <TestimonialsSection />
       <CTABannerSection />
     </>
-  ) 
-}
+  )
+} 

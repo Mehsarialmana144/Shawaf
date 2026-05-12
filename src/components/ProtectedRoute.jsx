@@ -1,4 +1,4 @@
-import { Link, Navigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
 
@@ -19,23 +19,23 @@ export default function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#F5F5F0]">
+        <div className="w-8 h-8 border-4 border-[#006A4E] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="card p-8 max-w-md text-center">
+      <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-[#F5F5F0]">
+        <div className="card p-6 sm:p-8 w-full max-w-md text-center">
           <div className="text-5xl mb-4">🔐</div>
 
-          <h1 className="text-xl font-bold text-stone-900 mb-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#333333] mb-2" dir="auto">
             {text.title}
           </h1>
 
-          <p className="text-stone-500 text-sm mb-5">
+          <p className="text-stone-500 text-sm sm:text-base mb-5 leading-relaxed" dir="auto">
             {text.message}
           </p>
 

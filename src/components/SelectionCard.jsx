@@ -9,19 +9,19 @@ export default function SelectionCard({
     <button
       type="button"
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-xl border-2 transition-all text-sm font-medium cursor-pointer
-        ${wide ? 'flex-row gap-3' : ''}
+      className={`w-full min-w-0 flex items-center justify-center rounded-xl border-2 transition-all text-xs sm:text-sm font-medium cursor-pointer text-center
+        ${wide ? 'flex-row gap-3 px-3 py-4' : 'flex-col gap-2 px-2.5 sm:px-3 py-4'}
         ${
           selected
-            ? 'border-orange-500 bg-orange-50 text-orange-600'
-            : 'border-stone-200 bg-white text-stone-700 hover:border-orange-300 hover:bg-orange-50/50'
+            ? 'border-[#006A4E] bg-[#E6F2EE] text-[#006A4E] shadow-sm'
+            : 'border-stone-200 bg-white text-stone-700 hover:border-[#D4AF37] hover:bg-[#FBF6E3]'
         }`}
     >
-      <span className="text-xl leading-none">{emoji}</span>
+      <span className="text-xl leading-none shrink-0">{emoji}</span>
 
       <span
-        className={`text-center leading-snug ${
-          selected ? 'text-orange-600' : 'text-stone-700'
+        className={`leading-snug min-w-0 ${
+          selected ? 'text-[#006A4E]' : 'text-stone-700'
         }`}
         dir="auto"
       >

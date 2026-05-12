@@ -3,7 +3,6 @@ import SelectionCard from '../components/SelectionCard'
 
 const CITIES = [
   'Riyadh',
-  'Diriyah',
   'Jeddah',
   'Mecca',
   'Medina',
@@ -12,6 +11,7 @@ const CITIES = [
   'Dhahran',
   'Al-Ahsa',
   'Al-Ula',
+  'NEOM',
   'Abha',
   'Taif',
   'Yanbu',
@@ -19,6 +19,7 @@ const CITIES = [
   'Hail',
   'Najran',
   'Jizan',
+  'Diriyah',
   'Buraidah',
   'Jubail',
   'Al-Baha',
@@ -26,33 +27,6 @@ const CITIES = [
   'Hafar Al-Batin',
   'KAEC',
 ]
-
-const CITY_LABELS_AR = {
-  Riyadh: 'الرياض',
-  Diriyah: 'الدرعية',
-  Jeddah: 'جدة',
-  Mecca: 'مكة',
-  Medina: 'المدينة المنورة',
-  Dammam: 'الدمام',
-  'Al-Khobar': 'الخبر',
-  Dhahran: 'الظهران',
-  'Al-Ahsa': 'الأحساء',
-  'Al-Ula': 'العلا',
-  NEOM: 'نيوم',
-  Abha: 'أبها',
-  Taif: 'الطائف',
-  Yanbu: 'ينبع',
-  Tabuk: 'تبوك',
-  Hail: 'حائل',
-  Najran: 'نجران',
-  Jizan: 'جازان',
-  Buraidah: 'بريدة',
-  Jubail: 'الجبيل',
-  'Al-Baha': 'الباحة',
-  Sakaka: 'سكاكا',
-  'Hafar Al-Batin': 'حفر الباطن',
-  KAEC: 'مدينة الملك عبدالله الاقتصادية',
-}
 
 const TRIP_TYPES = [
   { key: 'cultural', emoji: '🏛️' },
@@ -63,11 +37,6 @@ const TRIP_TYPES = [
   { key: 'family', emoji: '👨‍👩‍👧' },
 ]
 
-function getCityLabel(city, lang) {
-  if (!city) return ''
-  return lang === 'ar' ? CITY_LABELS_AR[city] || city : city
-}
-
 function daysBetween(start, end) {
   if (!start || !end) return 0
   const diff = new Date(end) - new Date(start)
@@ -76,99 +45,61 @@ function daysBetween(start, end) {
 
 export default function StepOne({ data, onChange, onNext }) {
   const { t, lang } = useLang()
-
   const isArabic = lang === 'ar'
-
-  const text = {
-    selectCity: isArabic ? 'اختر مدينة...' : 'Select a city...',
-    cityHelp: isArabic
-      ? 'يمكنك اختيار مدينة واحدة أو أكثر للرحلة. الحد الأقصى 3 مدن.'
-      : 'Select one or more cities for your trip. Maximum 3 cities.',
-    selectedCities: isArabic ? 'المدن المختارة:' : 'Selected cities:',
-    removeCity: isArabic ? 'حذف المدينة' : 'Remove city',
-    maxCitiesAlert: isArabic
-      ? 'يمكن اختيار 3 مدن كحد أقصى للرحلة الواحدة.'
-      : 'You can select up to 3 cities only.',
-    selectCityAlert: isArabic
-      ? 'يرجى اختيار مدينة واحدة على الأقل.'
-      : t('searchCity'),
-    selectDatesAlert: isArabic
-      ? 'يرجى اختيار تاريخ البداية والنهاية.'
-      : 'Please select dates',
-    selectTripTypeAlert: isArabic
-      ? 'يرجى اختيار نوع الرحلة.'
-      : 'Please select a trip type',
-  }
-
   const days = daysBetween(data.startDate, data.endDate)
-  const selectedCities = data.cities || (data.city ? [data.city] : [])
 
-  const addCity = (city) => {
-    if (!city) return
-
-    if (selectedCities.includes(city)) return
-
-    if (selectedCities.length >= 3) {
-      alert(text.maxCitiesAlert)
+  const handleNext = () => {
+    if (!data.city) {
+      alert(isArabic ? 'الرجاء اختيار مدينة الوجهة' : 'Please select a destination city')
       return
     }
 
-    const updatedCities = [...selectedCities, city]
+    if (!data.startDate || !data.endDate) {
+      alert(isArabic ? 'الرجاء اختيار تاريخ البداية والنهاية' : 'Please select start and end dates')
+      return
+    }
 
-    onChange({
-      cities: updatedCities,
-      city: updatedCities[0] || '',
-    })
-  }
-
-  const removeCity = (city) => {
-    const updatedCities = selectedCities.filter((item) => item !== city)
-
-    onChange({
-      cities: updatedCities,
-      city: updatedCities[0] || '',
-    })
-  }
-
-  const handleNext = () => {
-    if (selectedCities.length === 0) return alert(text.selectCityAlert)
-    if (!data.startDate || !data.endDate) return alert(text.selectDatesAlert)
-    if (!data.tripType) return alert(text.selectTripTypeAlert)
+    if (!data.tripType) {
+      alert(isArabic ? 'الرجاء اختيار نوع الرحلة' : 'Please select a trip type')
+      return
+    }
 
     onNext()
   }
 
-  const availableCities = CITIES.filter((city) => !selectedCities.includes(city))
-
   return (
-    <div className="card p-8">
-      <h2 className="text-xl font-bold text-stone-900 mb-1">
-        {t('planNewTrip')}
-      </h2>
+    <div className="card w-full p-5 sm:p-8 overflow-hidden">
+      <div className="mb-7 text-start">
+        <h2
+          className="text-xl sm:text-2xl font-bold text-[#333333] mb-1 leading-tight"
+          dir="auto"
+        >
+          {t('planNewTrip')}
+        </h2>
 
-      <p className="text-sm text-stone-500 mb-7">{t('step1Sub')}</p>
-
-      {/* Destination Cities */}
-      <div className="mb-6">
-        <label className="flex items-center gap-2 text-sm font-semibold text-stone-700 mb-2">
-          <span className="text-orange-500">📍</span> {t('destinationCity')}
-        </label>
-
-        <p className="text-xs text-stone-400 mb-3">
-          {text.cityHelp}
+        <p className="text-sm sm:text-base text-stone-500 leading-relaxed" dir="auto">
+          {t('step1Sub')}
         </p>
+      </div>
+
+      {/* Destination City */}
+      <div className="mb-5">
+        <label className="flex items-center gap-2 text-sm font-semibold text-[#333333] mb-2">
+          <span className="text-[#006A4E]">📍</span>
+          <span dir="auto">{t('destinationCity')}</span>
+        </label>
 
         <div className="relative">
           <select
-            className="input-field appearance-none pr-10"
-            value=""
-            onChange={(e) => addCity(e.target.value)}
+            className="input-field appearance-none pe-10 ps-4 text-sm sm:text-base min-h-[52px]"
+            value={data.city}
+            onChange={(e) => onChange({ city: e.target.value })}
+            dir={isArabic ? 'rtl' : 'ltr'}
           >
-            <option value="">{text.selectCity}</option>
-
-            {availableCities.map((city) => (
+            <option value="">{t('searchCity')}</option>
+            {CITIES.map((city) => (
               <option key={city} value={city}>
-                {getCityLabel(city, lang)}
+                {city}
               </option>
             ))}
           </select>
@@ -179,68 +110,36 @@ export default function StepOne({ data, onChange, onNext }) {
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
-
-        {selectedCities.length > 0 && (
-          <div className="mt-3">
-            <div className="text-xs text-stone-500 mb-2">
-              {text.selectedCities}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {selectedCities.map((city) => (
-                <span
-                  key={city}
-                  className="inline-flex items-center gap-2 bg-orange-50 border border-orange-100 text-orange-700 rounded-full px-3 py-1.5 text-sm"
-                  dir="auto"
-                >
-                  {getCityLabel(city, lang)}
-
-                  <button
-                    type="button"
-                    onClick={() => removeCity(city)}
-                    className="text-orange-500 hover:text-red-500 font-bold leading-none"
-                    title={text.removeCity}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Dates */}
-      <div className="grid grid-cols-2 gap-4 mb-3">
-        <div>
-          <label className="flex items-center gap-2 text-sm font-semibold text-stone-700 mb-2">
-            <span>📅</span> {t('startDate')}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+        <div className="min-w-0">
+          <label className="flex items-center gap-2 text-sm font-semibold text-[#333333] mb-2">
+            <span>📅</span>
+            <span dir="auto">{t('startDate')}</span>
           </label>
 
           <input
             type="date"
-            className="input-field"
+            className="input-field min-h-[52px]"
             value={data.startDate}
             onChange={(e) => onChange({ startDate: e.target.value })}
           />
         </div>
 
-        <div>
-          <label className="flex items-center gap-2 text-sm font-semibold text-stone-700 mb-2">
-            <span>📅</span> {t('endDate')}
+        <div className="min-w-0">
+          <label className="flex items-center gap-2 text-sm font-semibold text-[#333333] mb-2">
+            <span>📅</span>
+            <span dir="auto">{t('endDate')}</span>
           </label>
 
           <input
             type="date"
-            className="input-field"
+            className="input-field min-h-[52px]"
             value={data.endDate}
             min={data.startDate}
             onChange={(e) => onChange({ endDate: e.target.value })}
@@ -250,18 +149,22 @@ export default function StepOne({ data, onChange, onNext }) {
 
       {/* Day count badge */}
       {days > 0 && (
-        <div className="mb-5 bg-orange-50 border border-orange-100 rounded-xl px-4 py-2.5 text-sm text-orange-700 font-medium">
+        <div
+          className="mb-5 bg-[#E6F2EE] border border-[#D4AF37]/40 rounded-xl px-4 py-2.5 text-sm text-[#006A4E] font-medium leading-relaxed"
+          dir="auto"
+        >
           {t('tripDayCount', days)}
         </div>
       )}
 
       {/* Number of People */}
       <div className="mb-6">
-        <label className="flex items-center gap-2 text-sm font-semibold text-stone-700 mb-3">
-          <span>👥</span> {t('numberOfPeople')}
+        <label className="flex items-center gap-2 text-sm font-semibold text-[#333333] mb-3">
+          <span>👥</span>
+          <span dir="auto">{t('numberOfPeople')}</span>
         </label>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-center sm:justify-start gap-4">
           <button
             type="button"
             onClick={() =>
@@ -269,12 +172,13 @@ export default function StepOne({ data, onChange, onNext }) {
                 numberOfPeople: Math.max(1, data.numberOfPeople - 1),
               })
             }
-            className="w-10 h-10 border-2 border-stone-200 rounded-full text-stone-600 font-bold text-xl flex items-center justify-center hover:border-orange-400 hover:text-orange-500 transition-colors"
+            className="w-11 h-11 border-2 border-stone-200 rounded-full text-stone-600 font-bold text-xl flex items-center justify-center hover:border-[#D4AF37] hover:text-[#006A4E] transition-colors"
+            aria-label={isArabic ? 'تقليل عدد الأشخاص' : 'Decrease number of people'}
           >
             -
           </button>
 
-          <span className="text-2xl font-bold text-stone-900 w-8 text-center">
+          <span className="text-2xl font-bold text-[#333333] w-10 text-center">
             {data.numberOfPeople}
           </span>
 
@@ -285,7 +189,8 @@ export default function StepOne({ data, onChange, onNext }) {
                 numberOfPeople: Math.min(20, data.numberOfPeople + 1),
               })
             }
-            className="w-10 h-10 border-2 border-stone-200 rounded-full text-stone-600 font-bold text-xl flex items-center justify-center hover:border-orange-400 hover:text-orange-500 transition-colors"
+            className="w-11 h-11 border-2 border-stone-200 rounded-full text-stone-600 font-bold text-xl flex items-center justify-center hover:border-[#D4AF37] hover:text-[#006A4E] transition-colors"
+            aria-label={isArabic ? 'زيادة عدد الأشخاص' : 'Increase number of people'}
           >
             +
           </button>
@@ -294,7 +199,7 @@ export default function StepOne({ data, onChange, onNext }) {
 
       {/* Trip Type */}
       <div className="mb-8">
-        <label className="text-sm font-semibold text-stone-700 block mb-3">
+        <label className="text-sm font-semibold text-[#333333] block mb-3" dir="auto">
           {t('tripType')}
         </label>
 
@@ -312,8 +217,9 @@ export default function StepOne({ data, onChange, onNext }) {
       </div>
 
       <button
+        type="button"
         onClick={handleNext}
-        className="w-full btn-primary justify-center py-4 rounded-2xl text-base"
+        className="w-full btn-primary justify-center py-4 rounded-2xl text-sm sm:text-base"
       >
         {t('configureTrip')}
       </button>

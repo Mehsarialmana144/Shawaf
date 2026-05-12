@@ -59,16 +59,16 @@ const CITY_LABELS_AR = {
 }
 
 const CATEGORY_COLORS = {
-  Landmark: '#3B82F6',
-  Museum: '#8B5CF6',
-  Historical: '#F97316',
-  Heritage: '#10B981',
-  Entertainment: '#EC4899',
-  Shopping: '#F59E0B',
-  Culture: '#6366F1',
-  Outdoor: '#14B8A6',
-  Natural: '#22C55E',
-  Restaurant: '#EF4444',
+  Landmark: '#006A4E',
+  Museum: '#D4AF37',
+  Historical: '#004D39',
+  Heritage: '#6FAE9B',
+  Entertainment: '#B89122',
+  Shopping: '#8A6F18',
+  Culture: '#2E7D67',
+  Outdoor: '#4F9D84',
+  Natural: '#1D6B54',
+  Restaurant: '#A17E20',
 }
 
 const CATEGORY_LABELS_AR = {
@@ -85,16 +85,16 @@ const CATEGORY_LABELS_AR = {
 }
 
 const LEGEND = [
-  { type: 'Landmark', color: '#3B82F6' },
-  { type: 'Museum', color: '#8B5CF6' },
-  { type: 'Historical', color: '#F97316' },
-  { type: 'Heritage', color: '#10B981' },
-  { type: 'Entertainment', color: '#EC4899' },
-  { type: 'Shopping', color: '#F59E0B' },
-  { type: 'Culture', color: '#6366F1' },
-  { type: 'Outdoor', color: '#14B8A6' },
-  { type: 'Natural', color: '#22C55E' },
-  { type: 'Restaurant', color: '#EF4444' },
+  { type: 'Landmark', color: '#006A4E' },
+  { type: 'Museum', color: '#D4AF37' },
+  { type: 'Historical', color: '#004D39' },
+  { type: 'Heritage', color: '#6FAE9B' },
+  { type: 'Entertainment', color: '#B89122' },
+  { type: 'Shopping', color: '#8A6F18' },
+  { type: 'Culture', color: '#2E7D67' },
+  { type: 'Outdoor', color: '#4F9D84' },
+  { type: 'Natural', color: '#1D6B54' },
+  { type: 'Restaurant', color: '#A17E20' },
 ]
 
 function isInsideSaudi(lat, lng) {
@@ -179,14 +179,18 @@ function buildGoogleMapsUrl(station) {
   }
 
   const name = encodeURIComponent(
-    station?.name || station?.place_name || station?.place || station?.title || 'Attraction'
+    station?.name ||
+      station?.place_name ||
+      station?.place ||
+      station?.title ||
+      'Attraction'
   )
 
   return `https://www.google.com/maps/search/?api=1&query=${name}`
 }
 
 function createNumberIcon(number, category) {
-  const color = CATEGORY_COLORS[category] || '#EA580C'
+  const color = CATEGORY_COLORS[category] || '#006A4E'
 
   return L.divIcon({
     html: `
@@ -222,7 +226,10 @@ function FitMapToMarkers({ stations, city }) {
 
       const validPositions = stations
         .map((station) => [getStationLat(station), getStationLng(station)])
-        .filter(([lat, lng]) => lat !== null && lng !== null && isInsideSaudi(lat, lng))
+        .filter(
+          ([lat, lng]) =>
+            lat !== null && lng !== null && isInsideSaudi(lat, lng)
+        )
 
       if (validPositions.length > 0) {
         const bounds = L.latLngBounds(validPositions)
@@ -257,7 +264,9 @@ export default function MapPage() {
     daySingular: isArabic ? 'يوم' : 'day',
     dayPlural: isArabic ? 'أيام' : 'days',
     openInGoogleMaps: isArabic ? 'فتح في خرائط Google' : 'Open in Google Maps',
-    missingCoordinates: isArabic ? 'إحداثيات مفقودة أو غير صحيحة' : 'Missing or invalid coordinates',
+    missingCoordinates: isArabic
+      ? 'إحداثيات مفقودة أو غير صحيحة'
+      : 'Missing or invalid coordinates',
     mapProvider: isArabic
       ? 'Leaflet / OpenStreetMap · تفتح خرائط Google خارجيًا'
       : 'Leaflet / OpenStreetMap · Google Maps opens externally',
@@ -290,7 +299,9 @@ export default function MapPage() {
       : []
 
   const cityDisplay = selectedCities.length
-    ? selectedCities.map((city) => getCityLabel(city, lang)).join(isArabic ? ' ← ' : ' → ')
+    ? selectedCities
+        .map((city) => getCityLabel(city, lang))
+        .join(isArabic ? ' ← ' : ' → ')
     : getCityLabel(tripData?.city || plan?.city || 'Riyadh', lang)
 
   const primaryCity = selectedCities[0] || tripData?.city || plan?.city || 'Riyadh'
@@ -312,7 +323,10 @@ export default function MapPage() {
           displayCategory: getCategoryLabel(station.category, lang),
         }))
       })
-      .filter((station) => selectedDay === 'all' || station.dayNum === Number(selectedDay))
+      .filter(
+        (station) =>
+          selectedDay === 'all' || station.dayNum === Number(selectedDay)
+      )
   }, [itinerary, selectedDay, selectedCities, primaryCity, lang])
 
   const mappedStations = allStations.filter(hasCoordinates)
@@ -327,239 +341,270 @@ export default function MapPage() {
 
   if (!plan) {
     return (
-      <div className="py-20 px-4 text-center">
-        <div className="text-6xl mb-4">🗺️</div>
-        <h2 className="text-xl font-bold text-stone-900 mb-2">
-          {t('noTripData')}
-        </h2>
-        <button onClick={() => navigate('/planner')} className="btn-primary mt-4">
-          {t('tripPlanner')}
-        </button>
+      <div className="min-h-[70vh] flex items-center justify-center px-4 py-16 bg-[#F5F5F0]">
+        <div className="card p-6 sm:p-8 w-full max-w-md text-center">
+          <div className="text-6xl mb-4">🗺️</div>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-[#333333] mb-2" dir="auto">
+            {t('noTripData')}
+          </h2>
+
+          <button
+            onClick={() => navigate('/planner')}
+            className="btn-primary mt-4 justify-center"
+          >
+            {t('tripPlanner')}
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex bg-stone-100">
-      <div className="w-72 flex-shrink-0 bg-white border-e border-stone-200 overflow-y-auto p-4 space-y-4 z-10">
-        <div>
-          <h2 className="font-bold text-stone-900 text-lg">{t('mapTitle')}</h2>
+    <div className="w-full bg-[#F5F5F0] overflow-hidden">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5 lg:gap-6 min-h-[calc(100vh-130px)]">
+          {/* Sidebar */}
+          <aside className="bg-white border border-[#DDD8C8] rounded-2xl overflow-hidden lg:max-h-[calc(100vh-150px)] lg:overflow-y-auto">
+            <div className="p-4 space-y-4">
+              <div>
+                <h2 className="font-bold text-[#333333] text-lg" dir="auto">
+                  {t('mapTitle')}
+                </h2>
 
-          <p className="text-sm text-stone-500" dir="auto">
-            {cityDisplay} · {days} {days === 1 ? text.daySingular : text.dayPlural}
-          </p>
+                <p className="text-sm text-stone-500" dir="auto">
+                  {cityDisplay} · {days}{' '}
+                  {days === 1 ? text.daySingular : text.dayPlural}
+                </p>
 
-          <p className="text-xs text-stone-400 mt-1">
-            {mappedStations.length} {text.mapped} · {missingCoordinateStations.length}{' '}
-            {text.withoutCoordinates}
-          </p>
-        </div>
-
-        <div className="card p-4">
-          <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3">
-            {t('filterByDay')}
-          </h3>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedDay('all')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                selectedDay === 'all'
-                  ? 'bg-stone-800 text-white border-stone-800'
-                  : 'border-stone-200 text-stone-600 hover:border-stone-400'
-              }`}
-            >
-              {t('allAttractions')}
-            </button>
-
-            {Array.from({ length: days }, (_, index) => index + 1).map((day) => {
-              const dayData = itinerary[day - 1]
-              const dayCity = dayData?.city || selectedCities[day - 1] || ''
-              const dayCityLabel = getCityLabel(dayCity, lang)
-
-              return (
-                <button
-                  key={day}
-                  onClick={() => setSelectedDay(day)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                    selectedDay === day
-                      ? 'bg-orange-500 text-white border-orange-500'
-                      : 'border-stone-200 text-stone-600 hover:border-orange-300'
-                  }`}
-                >
-                  {t('day')} {day}
-                  {dayCityLabel ? ` (${dayCityLabel})` : ''}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        <div className="card p-4">
-          <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3">
-            {t('legend')}
-          </h3>
-
-          <div className="space-y-1.5">
-            {LEGEND.map(({ type, color }) => (
-              <div key={type} className="flex items-center gap-2 text-xs text-stone-600">
-                <div
-                  className="w-3 h-3 rounded-full flex-shrink-0"
-                  style={{ background: color }}
-                />
-
-                <span dir="auto">{getCategoryLabel(type, lang)}</span>
+                <p className="text-xs text-stone-400 mt-1" dir="auto">
+                  {mappedStations.length} {text.mapped} ·{' '}
+                  {missingCoordinateStations.length} {text.withoutCoordinates}
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="card p-4">
-          <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3">
-            {allStations.length} {t('attractions')}
-          </h3>
+              <div className="card p-4">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3" dir="auto">
+                  {t('filterByDay')}
+                </h3>
 
-          <div className="space-y-3">
-            {allStations.map((station, index) => {
-              const hasCoords = hasCoordinates(station)
-              const dayCityLabel = getCityLabel(station.dayCity, lang)
-
-              return (
-                <div key={`${station.dayNum}-${index}`} className="flex items-start gap-2.5">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                      hasCoords
-                        ? 'bg-orange-100 text-orange-600'
-                        : 'bg-stone-100 text-stone-400'
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedDay('all')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                      selectedDay === 'all'
+                        ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                        : 'border-stone-200 text-stone-600 hover:border-[#D4AF37] hover:bg-[#FBF6E3]'
                     }`}
                   >
-                    {index + 1}
-                  </div>
+                    {t('allAttractions')}
+                  </button>
 
-                  <div className="min-w-0 flex-1">
-                    <div
-                      className="font-medium text-stone-800 text-xs leading-tight"
-                      dir="auto"
-                    >
-                      {station.displayName}
-                    </div>
+                  {Array.from({ length: days }, (_, index) => index + 1).map(
+                    (day) => {
+                      const dayData = itinerary[day - 1]
+                      const dayCity = dayData?.city || selectedCities[day - 1] || ''
+                      const dayCityLabel = getCityLabel(dayCity, lang)
 
-                    <div className="text-xs text-stone-400 mt-0.5" dir="auto">
-                      {t('day')} {station.dayNum}
-                      {dayCityLabel ? ` (${dayCityLabel})` : ''}
-                      {station.time ? ` · ${station.time}` : ''}
-                    </div>
-
-                    {station.displayCategory && (
-                      <div className="text-xs text-stone-400 mt-0.5" dir="auto">
-                        {station.displayCategory}
-                      </div>
-                    )}
-
-                    {hasCoords ? (
-                      <a
-                        href={buildGoogleMapsUrl(station)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-orange-500 hover:text-orange-700 mt-1 inline-block"
-                      >
-                        {text.openInGoogleMaps}
-                      </a>
-                    ) : (
-                      <div className="text-xs text-red-400 mt-1">
-                        {text.missingCoordinates}
-                      </div>
-                    )}
-                  </div>
+                      return (
+                        <button
+                          key={day}
+                          onClick={() => setSelectedDay(day)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                            selectedDay === day
+                              ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                              : 'border-stone-200 text-stone-600 hover:border-[#D4AF37] hover:bg-[#FBF6E3]'
+                          }`}
+                          dir="auto"
+                        >
+                          {t('day')} {day}
+                          {dayCityLabel ? ` (${dayCityLabel})` : ''}
+                        </button>
+                      )
+                    }
+                  )}
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
+              </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="bg-white border-b border-stone-200 px-4 py-2 flex items-center justify-between gap-2 z-10">
-          <button className="flex items-center gap-1.5 bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium">
-            🗺️ {t('map')}
-          </button>
+              <div className="card p-4">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3" dir="auto">
+                  {t('legend')}
+                </h3>
 
-          <div className="text-xs text-stone-400">
-            {text.mapProvider}
-          </div>
-        </div>
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-2">
+                  {LEGEND.map(({ type, color }) => (
+                    <div
+                      key={type}
+                      className="flex items-center gap-2 text-xs text-stone-600 min-w-0"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ background: color }}
+                      />
 
-        <div className="flex-1 min-h-0 relative" dir="ltr">
-          <MapContainer
-            center={center}
-            zoom={11}
-            scrollWheelZoom
-            className="absolute inset-0 z-0"
-            style={{
-              height: '100%',
-              width: '100%',
-              borderRadius: 0,
-            }}
-          >
-            <TileLayer
-              attribution="© OpenStreetMap contributors"
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-
-            <FitMapToMarkers stations={mappedStations} city={primaryCity} />
-
-            {mappedStations.map((station, index) => {
-              const lat = getStationLat(station)
-              const lng = getStationLng(station)
-              const dayCityLabel = getCityLabel(station.dayCity, lang)
-
-              return (
-                <Marker
-                  key={`${station.dayNum}-${index}-${station.displayName}`}
-                  position={[lat, lng]}
-                  icon={createNumberIcon(index + 1, station.category)}
-                >
-                  <Popup>
-                    <div className="min-w-[200px]" dir={isArabic ? 'rtl' : 'ltr'}>
-                      <div className="font-semibold text-sm mb-1" dir="auto">
-                        {station.displayName}
-                      </div>
-
-                      <div className="text-xs text-stone-500 mb-1" dir="auto">
-                        {t('day')} {station.dayNum}
-                        {dayCityLabel ? ` (${dayCityLabel})` : ''}
-                      </div>
-
-                      {station.time && (
-                        <div className="text-xs text-orange-600 mb-1">
-                          {station.time}
-                        </div>
-                      )}
-
-                      {station.displayCategory && (
-                        <div className="text-xs text-stone-500 mb-1" dir="auto">
-                          {station.displayCategory}
-                        </div>
-                      )}
-
-                      <div className="text-xs text-stone-600 leading-relaxed" dir="auto">
-                        {station.displayDescription}
-                      </div>
-
-                      <a
-                        href={buildGoogleMapsUrl(station)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-orange-600 mt-2 inline-block"
-                      >
-                        📍 {text.openInGoogleMaps}
-                      </a>
+                      <span dir="auto" className="truncate">
+                        {getCategoryLabel(type, lang)}
+                      </span>
                     </div>
-                  </Popup>
-                </Marker>
-              )
-            })}
-          </MapContainer>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card p-4">
+                <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3" dir="auto">
+                  {allStations.length} {t('attractions')}
+                </h3>
+
+                <div className="space-y-3 max-h-[360px] lg:max-h-none overflow-y-auto pe-1">
+                  {allStations.map((station, index) => {
+                    const hasCoords = hasCoordinates(station)
+                    const dayCityLabel = getCityLabel(station.dayCity, lang)
+
+                    return (
+                      <div
+                        key={`${station.dayNum}-${index}`}
+                        className="flex items-start gap-2.5"
+                      >
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                            hasCoords
+                              ? 'bg-[#E6F2EE] text-[#006A4E] border border-[#D4AF37]/35'
+                              : 'bg-stone-100 text-stone-400'
+                          }`}
+                        >
+                          {index + 1}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div
+                            className="font-medium text-[#333333] text-xs leading-tight"
+                            dir="auto"
+                          >
+                            {station.displayName}
+                          </div>
+
+                          <div className="text-xs text-stone-400 mt-0.5" dir="auto">
+                            {t('day')} {station.dayNum}
+                            {dayCityLabel ? ` (${dayCityLabel})` : ''}
+                            {station.time ? ` · ${station.time}` : ''}
+                          </div>
+
+                          {station.displayCategory && (
+                            <div className="text-xs text-stone-400 mt-0.5" dir="auto">
+                              {station.displayCategory}
+                            </div>
+                          )}
+
+                          {hasCoords ? (
+                            <a
+                              href={buildGoogleMapsUrl(station)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-[#006A4E] hover:text-[#004D39] mt-1 inline-block"
+                              dir="auto"
+                            >
+                              {text.openInGoogleMaps}
+                            </a>
+                          ) : (
+                            <div className="text-xs text-red-400 mt-1" dir="auto">
+                              {text.missingCoordinates}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Map Area */}
+          <section className="bg-white border border-[#DDD8C8] rounded-2xl overflow-hidden min-w-0 flex flex-col min-h-[520px]">
+            <div className="bg-white border-b border-[#DDD8C8] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="inline-flex items-center gap-1.5 bg-[#006A4E] text-white px-3 py-1.5 rounded-lg text-sm font-medium w-fit">
+                🗺️ {t('map')}
+              </div>
+
+              <div className="text-xs text-stone-400" dir="auto">
+                {text.mapProvider}
+              </div>
+            </div>
+
+            <div className="flex-1 min-h-[460px] relative" dir="ltr">
+              <MapContainer
+                center={center}
+                zoom={11}
+                scrollWheelZoom
+                className="absolute inset-0 z-0"
+                style={{
+                  height: '100%',
+                  width: '100%',
+                  borderRadius: 0,
+                }}
+              >
+                <TileLayer
+                  attribution="© OpenStreetMap contributors"
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+
+                <FitMapToMarkers stations={mappedStations} city={primaryCity} />
+
+                {mappedStations.map((station, index) => {
+                  const lat = getStationLat(station)
+                  const lng = getStationLng(station)
+                  const dayCityLabel = getCityLabel(station.dayCity, lang)
+
+                  return (
+                    <Marker
+                      key={`${station.dayNum}-${index}-${station.displayName}`}
+                      position={[lat, lng]}
+                      icon={createNumberIcon(index + 1, station.category)}
+                    >
+                      <Popup>
+                        <div className="min-w-[200px]" dir={isArabic ? 'rtl' : 'ltr'}>
+                          <div className="font-semibold text-sm mb-1" dir="auto">
+                            {station.displayName}
+                          </div>
+
+                          <div className="text-xs text-stone-500 mb-1" dir="auto">
+                            {t('day')} {station.dayNum}
+                            {dayCityLabel ? ` (${dayCityLabel})` : ''}
+                          </div>
+
+                          {station.time && (
+                            <div className="text-xs text-[#006A4E] mb-1">
+                              {station.time}
+                            </div>
+                          )}
+
+                          {station.displayCategory && (
+                            <div className="text-xs text-stone-500 mb-1" dir="auto">
+                              {station.displayCategory}
+                            </div>
+                          )}
+
+                          <div className="text-xs text-stone-600 leading-relaxed" dir="auto">
+                            {station.displayDescription}
+                          </div>
+
+                          <a
+                            href={buildGoogleMapsUrl(station)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-[#006A4E] mt-2 inline-block"
+                            dir="auto"
+                          >
+                            📍 {text.openInGoogleMaps}
+                          </a>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  )
+                })}
+              </MapContainer>
+            </div>
+          </section>
         </div>
       </div>
     </div>

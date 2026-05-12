@@ -103,35 +103,43 @@ export default function ReportIssue() {
   }
 
   return (
-    <div className="py-12 px-6 max-w-3xl mx-auto">
-      <div className="card p-8">
+    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 overflow-hidden">
+      <div className="card p-5 sm:p-8">
         <div className="mb-6">
-          <div className="text-4xl mb-3">🚩</div>
+          <div className="w-14 h-14 bg-[#E6F2EE] border border-[#D4AF37]/35 rounded-2xl flex items-center justify-center text-3xl mb-4">
+            🚩
+          </div>
 
-          <h1 className="text-2xl font-bold text-stone-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#333333]" dir="auto">
             {text.title}
           </h1>
 
-          <p className="text-sm text-stone-500 mt-2 leading-relaxed">
+          <p className="text-sm sm:text-base text-stone-500 mt-2 leading-relaxed" dir="auto">
             {text.subtitle}
           </p>
         </div>
 
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm mb-5">
+          <div
+            className="bg-[#E6F2EE] border border-[#006A4E]/20 text-[#006A4E] px-4 py-3 rounded-xl text-sm mb-5"
+            dir="auto"
+          >
             {success}
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5">
+          <div
+            className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5"
+            dir="auto"
+          >
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1.5">
+            <label className="block text-sm font-medium text-[#333333] mb-1.5" dir="auto">
               {text.issueType}
             </label>
 
@@ -139,6 +147,7 @@ export default function ReportIssue() {
               className="input-field"
               value={reportType}
               onChange={(e) => setReportType(e.target.value)}
+              dir={isArabic ? 'rtl' : 'ltr'}
             >
               {reportTypes.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -149,7 +158,7 @@ export default function ReportIssue() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1.5">
+            <label className="block text-sm font-medium text-[#333333] mb-1.5" dir="auto">
               {text.issueDescription}
             </label>
 
@@ -164,7 +173,10 @@ export default function ReportIssue() {
           </div>
 
           {!user && (
-            <div className="bg-orange-50 border border-orange-100 text-orange-700 px-4 py-3 rounded-xl text-sm">
+            <div
+              className="bg-[#FBF6E3] border border-[#D4AF37]/40 text-[#6B571B] px-4 py-3 rounded-xl text-sm leading-relaxed"
+              dir="auto"
+            >
               {text.guestNote}
             </div>
           )}

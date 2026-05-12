@@ -105,7 +105,6 @@ const STATUS_LABELS_AR = {
 const AVAILABILITY_LABELS_AR = {
   permanent: 'دائم',
   seasonal: 'موسمي',
-  temporary: 'مؤقت',
 }
 
 function getCityLabel(city, lang) {
@@ -179,10 +178,8 @@ export default function AdminAttractions() {
     notSet: isArabic ? 'غير محدد' : 'Not set',
     selectCity: isArabic ? 'اختر المدينة' : 'Select city',
     selectCategory: isArabic ? 'اختر التصنيف' : 'Select category',
-    selectStatus: isArabic ? 'اختر الحالة' : 'Select status',
     permanent: isArabic ? 'دائم' : 'Permanent',
     seasonal: isArabic ? 'موسمي' : 'Seasonal',
-    temporary: isArabic ? 'مؤقت' : 'Temporary',
     nameRequired: isArabic ? 'اسم المعلم الإنجليزي مطلوب.' : 'English attraction name is required.',
     cityRequired: isArabic ? 'المدينة مطلوبة.' : 'City is required.',
     categoryRequired: isArabic ? 'التصنيف مطلوب.' : 'Category is required.',
@@ -365,45 +362,49 @@ export default function AdminAttractions() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#F5F5F0]">
+        <div className="w-8 h-8 border-4 border-[#006A4E] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="py-10 px-6 max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900">{text.title}</h1>
-          <p className="text-sm text-stone-500 mt-1">{text.subtitle}</p>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#333333]" dir="auto">
+            {text.title}
+          </h1>
+          <p className="text-sm text-stone-500 mt-1 leading-relaxed" dir="auto">
+            {text.subtitle}
+          </p>
         </div>
 
-        <button onClick={loadAttractions} className="btn-outline">
+        <button onClick={loadAttractions} className="btn-outline shrink-0">
           {text.refresh}
         </button>
       </div>
 
       {message && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm mb-5">
+        <div className="bg-[#E6F2EE] border border-[#006A4E]/20 text-[#006A4E] px-4 py-3 rounded-xl text-sm mb-5" dir="auto">
           {message}
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5" dir="auto">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <form onSubmit={handleSubmit} className="card p-6 space-y-4">
-          <h2 className="font-semibold text-stone-900">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 lg:gap-6">
+        <form onSubmit={handleSubmit} className="card p-4 sm:p-6 space-y-4 min-w-0">
+          <h2 className="font-semibold text-[#333333]" dir="auto">
             {editingId ? text.formTitleEdit : text.formTitleAdd}
           </h2>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.name}
             </label>
             <input
@@ -415,7 +416,7 @@ export default function AdminAttractions() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.nameAr}
             </label>
             <input
@@ -427,13 +428,14 @@ export default function AdminAttractions() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.city}
             </label>
             <select
               className="input-field mt-1"
               value={form.city}
               onChange={(e) => updateForm('city', e.target.value)}
+              dir={isArabic ? 'rtl' : 'ltr'}
             >
               <option value="">{text.selectCity}</option>
               {cities.map((city) => (
@@ -445,13 +447,14 @@ export default function AdminAttractions() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.category}
             </label>
             <select
               className="input-field mt-1"
               value={form.category}
               onChange={(e) => updateForm('category', e.target.value)}
+              dir={isArabic ? 'rtl' : 'ltr'}
             >
               <option value="">{text.selectCategory}</option>
               {categories.map((category) => (
@@ -463,7 +466,7 @@ export default function AdminAttractions() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.description}
             </label>
             <textarea
@@ -475,7 +478,7 @@ export default function AdminAttractions() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.descriptionAr}
             </label>
             <textarea
@@ -486,9 +489,9 @@ export default function AdminAttractions() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-stone-500">
+              <label className="text-xs font-medium text-stone-500" dir="auto">
                 {text.openingTime}
               </label>
               <input
@@ -500,7 +503,7 @@ export default function AdminAttractions() {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-stone-500">
+              <label className="text-xs font-medium text-stone-500" dir="auto">
                 {text.closingTime}
               </label>
               <input
@@ -513,19 +516,20 @@ export default function AdminAttractions() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.duration}
             </label>
             <input
               className="input-field mt-1"
               value={form.estimated_duration}
               onChange={(e) => updateForm('estimated_duration', e.target.value)}
+              dir="ltr"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-medium text-stone-500">
+              <label className="text-xs font-medium text-stone-500" dir="auto">
                 {text.latitude}
               </label>
               <input
@@ -537,7 +541,7 @@ export default function AdminAttractions() {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-stone-500">
+              <label className="text-xs font-medium text-stone-500" dir="auto">
                 {text.longitude}
               </label>
               <input
@@ -550,7 +554,7 @@ export default function AdminAttractions() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.priceRange}
             </label>
             <input
@@ -562,35 +566,36 @@ export default function AdminAttractions() {
           </div>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.availability}
             </label>
             <select
               className="input-field mt-1"
               value={form.availability_type}
               onChange={(e) => updateForm('availability_type', e.target.value)}
+              dir={isArabic ? 'rtl' : 'ltr'}
             >
               <option value="permanent">{text.permanent}</option>
               <option value="seasonal">{text.seasonal}</option>
-              <option value="temporary">{text.temporary}</option>
             </select>
           </div>
 
           <div>
-            <label className="text-xs font-medium text-stone-500">
+            <label className="text-xs font-medium text-stone-500" dir="auto">
               {text.status}
             </label>
             <select
               className="input-field mt-1"
               value={form.status}
               onChange={(e) => updateForm('status', e.target.value)}
+              dir={isArabic ? 'rtl' : 'ltr'}
             >
               <option value="active">{text.active}</option>
               <option value="inactive">{text.inactive}</option>
             </select>
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
             <button
               type="submit"
               disabled={saving}
@@ -600,22 +605,29 @@ export default function AdminAttractions() {
             </button>
 
             {editingId && (
-              <button type="button" onClick={resetForm} className="btn-outline">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="btn-outline justify-center"
+              >
                 {text.cancel}
               </button>
             )}
           </div>
         </form>
 
-        <div className="card p-6 lg:col-span-2">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-            <h2 className="font-semibold text-stone-900">{text.attractions}</h2>
+        <div className="card p-4 sm:p-6 xl:col-span-2 min-w-0">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
+            <h2 className="font-semibold text-[#333333]" dir="auto">
+              {text.attractions}
+            </h2>
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full md:w-auto">
               <select
-                className="border border-stone-300 rounded-xl px-3 py-2 text-sm bg-white"
+                className="input-field py-2 text-sm"
                 value={cityFilter}
                 onChange={(e) => setCityFilter(e.target.value)}
+                dir={isArabic ? 'rtl' : 'ltr'}
               >
                 <option value="all">{text.allCities}</option>
                 {cities.map((city) => (
@@ -626,9 +638,10 @@ export default function AdminAttractions() {
               </select>
 
               <select
-                className="border border-stone-300 rounded-xl px-3 py-2 text-sm bg-white"
+                className="input-field py-2 text-sm"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
+                dir={isArabic ? 'rtl' : 'ltr'}
               >
                 <option value="all">{text.allStatus}</option>
                 <option value="active">{text.active}</option>
@@ -638,7 +651,7 @@ export default function AdminAttractions() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[820px] text-sm">
               <thead>
                 <tr className="text-stone-500 border-b border-stone-100">
                   <th className="text-start pb-3 font-medium">{text.name}</th>
@@ -661,9 +674,9 @@ export default function AdminAttractions() {
                   filteredAttractions.map((item) => (
                     <tr
                       key={item.id}
-                      className="border-b border-stone-50 last:border-0"
+                      className="border-b border-stone-50 last:border-0 align-top"
                     >
-                      <td className="py-3.5 font-medium text-stone-900" dir="auto">
+                      <td className="py-3.5 font-medium text-[#333333]" dir="auto">
                         {getDisplayName(item, lang)}
 
                         {lang === 'ar' && item.name_ar && (
@@ -679,15 +692,15 @@ export default function AdminAttractions() {
                         </div>
                       </td>
 
-                      <td className="py-3.5 text-stone-600">
+                      <td className="py-3.5 text-stone-600" dir="auto">
                         {getCityLabel(item.city, lang)}
                       </td>
 
-                      <td className="py-3.5 text-stone-600">
+                      <td className="py-3.5 text-stone-600" dir="auto">
                         {getCategoryLabel(item.category, lang)}
                       </td>
 
-                      <td className="py-3.5 text-stone-600">
+                      <td className="py-3.5 text-stone-600" dir="ltr">
                         {item.opening_time && item.closing_time
                           ? `${String(item.opening_time).slice(0, 5)} - ${String(
                               item.closing_time
@@ -699,7 +712,7 @@ export default function AdminAttractions() {
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${
                             item.status === 'active'
-                              ? 'bg-green-100 text-green-700'
+                              ? 'bg-[#E6F2EE] text-[#006A4E]'
                               : 'bg-stone-100 text-stone-500'
                           }`}
                         >
@@ -710,22 +723,25 @@ export default function AdminAttractions() {
                       <td className="py-3.5">
                         <div className="flex flex-wrap gap-2">
                           <button
+                            type="button"
                             onClick={() => handleEdit(item)}
-                            className="text-xs px-3 py-1.5 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100"
+                            className="text-xs px-3 py-1.5 rounded-lg bg-[#E6F2EE] text-[#006A4E] hover:bg-[#D9EDE7] transition-colors"
                           >
                             {text.edit}
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => handleToggleStatus(item)}
-                            className="text-xs px-3 py-1.5 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200"
+                            className="text-xs px-3 py-1.5 rounded-lg bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
                           >
                             {item.status === 'active' ? text.disable : text.activate}
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => handleDelete(item.id)}
-                            className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100"
+                            className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                           >
                             {text.delete}
                           </button>
@@ -737,6 +753,10 @@ export default function AdminAttractions() {
               </tbody>
             </table>
           </div>
+
+          <p className="text-xs text-stone-400 mt-3" dir="auto">
+            {filteredAttractions.length} {text.attractions}
+          </p>
         </div>
       </div>
     </div>

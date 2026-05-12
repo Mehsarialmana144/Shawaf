@@ -1,72 +1,54 @@
 import { useLang } from '../context/LanguageContext'
 
 export default function StepIndicator({ currentStep }) {
-  const { lang } = useLang()
-  const isArabic = lang === 'ar'
+  const { t } = useLang()
 
   const steps = [
-    {
-      number: 1,
-      label: isArabic ? 'تفاصيل الرحلة' : 'Trip Details',
-    },
-    {
-      number: 2,
-      label: isArabic ? 'التفضيلات' : 'Preferences',
-    },
-    {
-      number: 3,
-      label: isArabic ? 'الخطة' : 'Itinerary',
-    },
+    { num: 1, label: t('step1Label') },
+    { num: 2, label: t('step2Label') },
+    { num: 3, label: t('step3Label') },
   ]
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between">
-        {steps.map((step, index) => {
-          const isActive = currentStep === step.number
-          const isCompleted = currentStep > step.number
-
-          return (
-            <div key={step.number} className="flex items-center flex-1">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
-                    isActive
-                      ? 'bg-orange-500 text-white shadow-lg shadow-orange-200'
-                      : isCompleted
-                      ? 'bg-green-500 text-white'
-                      : 'bg-stone-200 text-stone-500'
-                  }`}
-                >
-                  {isCompleted ? '✓' : step.number}
-                </div>
-
-                <div
-                  className={`text-xs mt-2 font-medium text-center ${
-                    isActive
-                      ? 'text-orange-600'
-                      : isCompleted
-                      ? 'text-green-600'
-                      : 'text-stone-400'
-                  }`}
-                >
-                  {step.label}
-                </div>
+    <div className="w-full max-w-3xl mx-auto mb-8 px-1 sm:px-4">
+      <div className="flex items-start justify-between gap-1 sm:gap-3">
+        {steps.map((step, i) => (
+          <div key={step.num} className="flex items-start flex-1 min-w-0">
+            <div className="flex flex-col items-center min-w-0 flex-shrink-0">
+              <div
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${
+                  step.num === currentStep || step.num < currentStep
+                    ? 'bg-[#006A4E] border-[#006A4E] text-white'
+                    : 'bg-white border-stone-300 text-stone-400'
+                }`}
+              >
+                {step.num}
               </div>
 
-              {index < steps.length - 1 && (
-                <div
-                  className={`flex-1 h-1 mx-3 rounded-full transition-all ${
-                    currentStep > step.number
-                      ? 'bg-green-500'
-                      : 'bg-stone-200'
-                  }`}
-                />
-              )}
+              <span
+                className={`mt-1.5 text-[11px] sm:text-xs font-medium text-center leading-tight max-w-[82px] sm:max-w-none ${
+                  step.num === currentStep
+                    ? 'text-[#006A4E]'
+                    : step.num < currentStep
+                    ? 'text-stone-600'
+                    : 'text-stone-400'
+                }`}
+                dir="auto"
+              >
+                {step.label}
+              </span>
             </div>
-          )
-        })}
+
+            {i < steps.length - 1 && (
+              <div
+                className={`flex-1 h-0.5 mx-1 sm:mx-3 mt-[18px] rounded-full ${
+                  step.num < currentStep ? 'bg-[#006A4E]' : 'bg-stone-200'
+                }`}
+              />
+            )}
+          </div>
+        ))}
       </div>
     </div>
   )
-}
+} 

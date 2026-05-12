@@ -67,8 +67,6 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.error('Auth load error:', err)
 
-      // لا نمسح اليوزر القديم عند الرجوع من Safari
-      // عشان ما يعلق الموقع أو يقلب الحالة فجأة
       if (showLoading) {
         setSession(null)
         setUser(null)
@@ -82,6 +80,21 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let mounted = true
 
+    const safeSetAuthState = async (nextSession) => {
+      if (!mounted) return
+
+      setSession(nextSession)
+      setUser(nextSession?.user ?? null)
+
+      if (nextSession?.user) {
+        await fetchProfile(nextSession.user)
+      } else {
+        setProfile(null)
+      }
+
+      if (mounted) setLoading(false)
+    }
+
     const initialLoad = async () => {
       setLoading(true)
 
@@ -92,14 +105,7 @@ export function AuthProvider({ children }) {
 
         if (!mounted) return
 
-        setSession(session)
-        setUser(session?.user ?? null)
-
-        if (session?.user) {
-          await fetchProfile(session.user)
-        } else {
-          setProfile(null)
-        }
+        await safeSetAuthState(session)
       } catch (err) {
         console.error('Initial auth error:', err)
 
@@ -108,8 +114,7 @@ export function AuthProvider({ children }) {
         setSession(null)
         setUser(null)
         setProfile(null)
-      } finally {
-        if (mounted) setLoading(false)
+        setLoading(false)
       }
     }
 
@@ -119,17 +124,7 @@ export function AuthProvider({ children }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return
-
-      setSession(session)
-      setUser(session?.user ?? null)
-
-      if (session?.user) {
-        await fetchProfile(session.user)
-      } else {
-        setProfile(null)
-      }
-
-      setLoading(false)
+      await safeSetAuthState(session)
     })
 
     const handlePageShow = () => {
@@ -139,6 +134,7 @@ export function AuthProvider({ children }) {
 
     const handleVisibilityChange = () => {
       if (!mounted) return
+
       if (document.visibilityState === 'visible') {
         loadAuth({ showLoading: false })
       }

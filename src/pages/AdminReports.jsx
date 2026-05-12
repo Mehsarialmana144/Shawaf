@@ -10,21 +10,40 @@ const REPORT_TYPE_LABELS_AR = {
   other: 'أخرى',
 }
 
+const REPORT_TYPE_LABELS_EN = {
+  technical: 'Technical Issue',
+  itinerary: 'Itinerary Issue',
+  attraction: 'Attraction Information Issue',
+  map: 'Map / Location Issue',
+  other: 'Other',
+}
+
 const STATUS_LABELS_AR = {
   pending: 'قيد الانتظار',
   reviewed: 'تمت المراجعة',
   resolved: 'تم الحل',
-  dismissed: 'تجاهل',
+  dismissed: 'تم التجاهل',
+}
+
+const STATUS_LABELS_EN = {
+  pending: 'Pending',
+  reviewed: 'Reviewed',
+  resolved: 'Resolved',
+  dismissed: 'Dismissed',
 }
 
 function getReportTypeLabel(type, lang) {
   if (!type) return ''
-  return lang === 'ar' ? REPORT_TYPE_LABELS_AR[type] || type : type
+  return lang === 'ar'
+    ? REPORT_TYPE_LABELS_AR[type] || type
+    : REPORT_TYPE_LABELS_EN[type] || type
 }
 
 function getStatusLabel(status, lang) {
   if (!status) return ''
-  return lang === 'ar' ? STATUS_LABELS_AR[status] || status : status
+  return lang === 'ar'
+    ? STATUS_LABELS_AR[status] || status
+    : STATUS_LABELS_EN[status] || status
 }
 
 function formatDate(dateValue, lang) {
@@ -38,6 +57,22 @@ function formatDate(dateValue, lang) {
       day: 'numeric',
     }
   )
+}
+
+function getStatusClass(status) {
+  if (status === 'resolved') {
+    return 'bg-[#E6F2EE] text-[#006A4E] border-[#006A4E]/20'
+  }
+
+  if (status === 'reviewed') {
+    return 'bg-[#FBF6E3] text-[#8A6F18] border-[#D4AF37]/35'
+  }
+
+  if (status === 'dismissed') {
+    return 'bg-stone-100 text-stone-500 border-stone-200'
+  }
+
+  return 'bg-white text-[#006A4E] border-[#D4AF37]/45'
 }
 
 export default function AdminReports() {
@@ -108,39 +143,42 @@ export default function AdminReports() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#F5F5F0]">
+        <div className="w-8 h-8 border-4 border-[#006A4E] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="py-10 px-6 max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#333333]" dir="auto">
             {text.title}
           </h1>
 
-          <p className="text-sm text-stone-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1 leading-relaxed" dir="auto">
             {text.subtitle}
           </p>
         </div>
 
-        <button onClick={loadReports} className="btn-outline">
+        <button onClick={loadReports} className="btn-outline shrink-0">
           {text.refresh}
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5">
+        <div
+          className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5"
+          dir="auto"
+        >
           {error}
         </div>
       )}
 
-      <div className="card p-6">
+      <div className="card p-4 sm:p-6 min-w-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="text-stone-500 border-b border-stone-100">
                 <th className="text-start pb-3 font-medium">{text.type}</th>
@@ -154,7 +192,7 @@ export default function AdminReports() {
             <tbody>
               {reports.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-8 text-center text-stone-400">
+                  <td colSpan="5" className="py-8 text-center text-stone-400" dir="auto">
                     {text.noReports}
                   </td>
                 </tr>
@@ -162,33 +200,39 @@ export default function AdminReports() {
                 reports.map((report) => (
                   <tr
                     key={report.id}
-                    className="border-b border-stone-50 last:border-0"
+                    className="border-b border-stone-50 last:border-0 align-top"
                   >
                     <td className="py-3.5 text-stone-700" dir="auto">
                       {getReportTypeLabel(report.report_type, lang)}
                     </td>
 
-                    <td className="py-3.5 text-stone-600 max-w-md" dir="auto">
+                    <td className="py-3.5 text-stone-600 max-w-md leading-relaxed" dir="auto">
                       {report.message}
                     </td>
 
                     <td className="py-3.5">
-                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-600">
+                      <span
+                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium border ${getStatusClass(
+                          report.status
+                        )}`}
+                        dir="auto"
+                      >
                         {getStatusLabel(report.status, lang)}
                       </span>
                     </td>
 
-                    <td className="py-3.5 text-stone-500">
+                    <td className="py-3.5 text-stone-500 whitespace-nowrap" dir="auto">
                       {formatDate(report.created_at, lang)}
                     </td>
 
                     <td className="py-3.5">
                       <select
-                        className="border border-stone-300 rounded-lg px-2 py-1 text-xs bg-white"
+                        className="border border-[#DDD8C8] rounded-lg px-2 py-2 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#006A4E]/20 focus:border-[#006A4E]"
                         value={report.status}
                         onChange={(e) =>
                           handleStatusChange(report.id, e.target.value)
                         }
+                        dir={isArabic ? 'rtl' : 'ltr'}
                       >
                         <option value="pending">{text.pending}</option>
                         <option value="reviewed">{text.reviewed}</option>
@@ -202,6 +246,10 @@ export default function AdminReports() {
             </tbody>
           </table>
         </div>
+
+        <p className="text-xs text-stone-400 mt-3" dir="auto">
+          {reports.length} {isArabic ? 'بلاغ' : 'reports'}
+        </p>
       </div>
     </div>
   )

@@ -222,9 +222,11 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
 
   if (!localPlan) {
     return (
-      <div className="card p-12 text-center">
+      <div className="card p-8 sm:p-12 text-center">
         <div className="text-5xl mb-4">🗺️</div>
-        <p className="text-stone-500">{t('generating')}</p>
+        <p className="text-stone-500" dir="auto">
+          {t('generating')}
+        </p>
       </div>
     )
   }
@@ -567,32 +569,34 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
   }
 
   return (
-    <div>
-      <div id="trip-pdf" className="bg-white p-8 rounded-2xl">
-        <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5 mb-5">
-          <h3 className="flex items-center gap-2 font-semibold text-orange-700 mb-3">
+    <div className="w-full overflow-hidden">
+      <div id="trip-pdf" className="bg-white p-4 sm:p-6 lg:p-8 rounded-2xl overflow-hidden">
+        <div className="bg-[#E6F2EE] border border-[#D4AF37]/40 rounded-2xl p-4 sm:p-5 mb-5">
+          <h3 className="flex items-center gap-2 font-semibold text-[#006A4E] mb-3" dir="auto">
             <span>🗺️</span> {t('tripSummary')}
           </h3>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
             <div className="sm:col-span-2">
               <span className="text-stone-500">{t('destinationCityLabel')}</span>{' '}
-              <strong dir="auto">{cityDisplay}</strong>
+              <strong className="text-[#333333]" dir="auto">
+                {cityDisplay}
+              </strong>
             </div>
 
             <div>
               <span className="text-stone-500">{t('startDateLabel')}</span>{' '}
-              <strong>{tripData.startDate}</strong>
+              <strong className="text-[#333333]">{tripData.startDate}</strong>
             </div>
 
             <div>
               <span className="text-stone-500">{t('endDateLabel')}</span>{' '}
-              <strong>{tripData.endDate}</strong>
+              <strong className="text-[#333333]">{tripData.endDate}</strong>
             </div>
 
             <div>
               <span className="text-stone-500">{t('numberOfPeopleLabel')}</span>{' '}
-              <strong>{tripData.numberOfPeople}</strong>
+              <strong className="text-[#333333]">{tripData.numberOfPeople}</strong>
             </div>
           </div>
         </div>
@@ -603,17 +607,19 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
           const dayTheme = lang === 'ar' ? day.theme_ar || day.theme : day.theme
 
           return (
-            <div key={di} className="card p-6 mb-4">
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <h3 className="font-bold text-stone-900 text-lg flex items-center gap-2 flex-wrap">
-                  <span className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+            <div key={di} className="card p-4 sm:p-6 mb-4 overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                <h3 className="font-bold text-[#333333] text-base sm:text-lg flex items-center gap-2 flex-wrap">
+                  <span className="w-8 h-8 bg-[#006A4E] text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0">
                     {di + 1}
                   </span>
 
-                  {t('day')} {di + 1}
+                  <span dir="auto">
+                    {t('day')} {di + 1}
+                  </span>
 
                   {dayCityLabel && (
-                    <span className="text-sm font-semibold text-orange-600" dir="auto">
+                    <span className="text-sm font-semibold text-[#006A4E]" dir="auto">
                       ({dayCityLabel})
                     </span>
                   )}
@@ -629,7 +635,7 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
                   type="button"
                   onClick={() => handleRegenerateDay(di)}
                   disabled={busyAction === `regenerate-day-${di}`}
-                  className="text-xs border border-orange-200 text-orange-600 hover:bg-orange-50 rounded-full px-3 py-1.5 transition-colors disabled:opacity-60"
+                  className="w-full sm:w-auto justify-center text-xs border border-[#D4AF37]/45 text-[#006A4E] hover:bg-[#FBF6E3] rounded-full px-3 py-2 transition-colors disabled:opacity-60"
                 >
                   {busyAction === `regenerate-day-${di}`
                     ? text.regenerating
@@ -647,24 +653,24 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
                   return (
                     <div
                       key={`${di}-${si}-${stationName}`}
-                      className="flex gap-4 pb-4 border-b border-stone-100 last:border-0 last:pb-0"
+                      className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4 border-b border-stone-100 last:border-0 last:pb-0"
                     >
-                      <div className="flex-shrink-0 w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+                      <div className="flex-shrink-0 w-8 h-8 bg-[#E6F2EE] text-[#006A4E] border border-[#D4AF37]/35 rounded-full flex items-center justify-center text-xs font-bold">
                         {si + 1}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div className="min-w-0">
                             <div
-                              className="font-semibold text-stone-900 text-sm"
+                              className="font-semibold text-[#333333] text-sm sm:text-base"
                               dir="auto"
                             >
                               {stationName}
                             </div>
 
                             {station.time && (
-                              <div className="text-xs text-orange-500 font-medium mt-0.5">
+                              <div className="text-xs text-[#006A4E] font-medium mt-0.5" dir="auto">
                                 {station.time}
                               </div>
                             )}
@@ -680,24 +686,27 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
                             href={buildMapsUrl(station, dayCity)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-shrink-0 text-xs text-orange-500 hover:text-orange-700 border border-orange-200 rounded-lg px-2.5 py-1 flex items-center gap-1 transition-colors hover:bg-orange-50"
+                            className="w-full sm:w-auto justify-center flex-shrink-0 text-xs text-[#006A4E] hover:text-[#004D39] border border-[#D4AF37]/45 rounded-lg px-3 py-2 flex items-center gap-1 transition-colors hover:bg-[#FBF6E3]"
+                            dir="auto"
                           >
                             📍 {text.openInMaps}
                           </a>
                         </div>
 
-                        <p
-                          className="text-sm text-stone-500 mt-1.5 leading-relaxed"
-                          dir="auto"
-                        >
-                          {stationDescription}
-                        </p>
+                        {stationDescription && (
+                          <p
+                            className="text-sm text-stone-500 mt-2 leading-relaxed"
+                            dir="auto"
+                          >
+                            {stationDescription}
+                          </p>
+                        )}
 
-                        <div className="flex flex-wrap gap-2 mt-3">
+                        <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 mt-3">
                           <button
                             type="button"
                             onClick={() => handleEditTime(di, si)}
-                            className="text-xs border border-stone-200 text-stone-600 hover:border-orange-300 hover:text-orange-600 rounded-full px-3 py-1.5 transition-colors"
+                            className="text-xs border border-stone-200 text-stone-600 hover:border-[#D4AF37] hover:text-[#006A4E] rounded-full px-3 py-2 transition-colors"
                           >
                             ✏️ {text.editTime}
                           </button>
@@ -706,7 +715,7 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
                             type="button"
                             onClick={() => handleReplaceActivity(di, si)}
                             disabled={busyAction === replaceKey}
-                            className="text-xs border border-stone-200 text-stone-600 hover:border-orange-300 hover:text-orange-600 rounded-full px-3 py-1.5 transition-colors disabled:opacity-60"
+                            className="text-xs border border-stone-200 text-stone-600 hover:border-[#D4AF37] hover:text-[#006A4E] rounded-full px-3 py-2 transition-colors disabled:opacity-60"
                           >
                             {busyAction === replaceKey
                               ? text.replacing
@@ -716,7 +725,7 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
                           <button
                             type="button"
                             onClick={() => handleRemoveActivity(di, si)}
-                            className="text-xs border border-red-200 text-red-500 hover:bg-red-50 rounded-full px-3 py-1.5 transition-colors"
+                            className="text-xs border border-red-200 text-red-500 hover:bg-red-50 rounded-full px-3 py-2 transition-colors"
                           >
                             🗑️ {text.removeActivity}
                           </button>
@@ -732,30 +741,30 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4 mt-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4 mt-4" dir="auto">
           {error}
         </div>
       )}
 
       {saved && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm mb-4 mt-4">
+        <div className="bg-[#E6F2EE] border border-[#006A4E]/20 text-[#006A4E] px-4 py-3 rounded-xl text-sm mb-4 mt-4" dir="auto">
           ✓ {text.tripSaved}
           {savedTripId && (
-            <span className="text-xs block mt-1 text-green-600">
+            <span className="text-xs block mt-1 text-[#006A4E]/80">
               {text.savedSuccess}
             </span>
           )}
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 mt-4">
-        <button onClick={onBack} className="btn-outline">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+        <button onClick={onBack} className="btn-outline justify-center">
           {t('backToPlanner')}
         </button>
 
         <button
           onClick={handleDownloadPDF}
-          className="btn-outline flex items-center gap-2"
+          className="btn-outline justify-center flex items-center gap-2"
         >
           📄 {t('generatePDF')}
         </button>
@@ -763,7 +772,7 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
         <button
           onClick={handleSave}
           disabled={saving || saved}
-          className="btn-primary flex items-center gap-2 disabled:opacity-60"
+          className="btn-primary justify-center flex items-center gap-2 disabled:opacity-60"
         >
           {saving ? (
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -776,9 +785,11 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
         </button>
       </div>
 
-      <div className="card p-5 mt-5 flex items-center justify-between gap-4">
-        <div>
-          <div className="font-semibold text-stone-900">🗺️ {t('mapTitle')}</div>
+      <div className="card p-4 sm:p-5 mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="min-w-0">
+          <div className="font-semibold text-[#333333]" dir="auto">
+            🗺️ {t('mapTitle')}
+          </div>
           <div className="text-sm text-stone-500 mt-0.5" dir="auto">
             {cityDisplay}
           </div>
@@ -795,9 +806,9 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
             )
             navigate('/map')
           }}
-          className="btn-primary text-sm py-2 px-4"
+          className="btn-primary text-sm py-2 px-4 justify-center"
         >
-          {t('map')} →
+          {t('map')} {isArabic ? '←' : '→'}
         </button>
       </div>
     </div>

@@ -4,6 +4,19 @@ const ARABIC_FONT_PATH = '/fonts/NotoNaskhArabic-Regular.ttf'
 const ARABIC_FONT_FILE = 'NotoNaskhArabic-Regular.ttf'
 const ARABIC_FONT_NAME = 'NotoNaskhArabic'
 
+const BRAND = {
+  green: [0, 106, 78],
+  greenDark: [0, 77, 57],
+  greenSoft: [230, 242, 238],
+  gold: [212, 175, 55],
+  goldSoft: [251, 246, 227],
+  offWhite: [245, 245, 240],
+  charcoal: [51, 51, 51],
+  muted: [120, 113, 108],
+  border: [221, 216, 200],
+  white: [255, 255, 255],
+}
+
 const CITY_LABELS_AR = {
   Riyadh: 'الرياض',
   Jeddah: 'جدة',
@@ -161,9 +174,7 @@ async function loadArabicFontAsBase64() {
   const response = await fetch(ARABIC_FONT_PATH)
 
   if (!response.ok) {
-    throw new Error(
-      `Arabic font not found at public/fonts/${ARABIC_FONT_FILE}`
-    )
+    throw new Error(`Arabic font not found at public/fonts/${ARABIC_FONT_FILE}`)
   }
 
   const buffer = await response.arrayBuffer()
@@ -203,7 +214,7 @@ function drawText(doc, text, x, y, options = {}) {
     lang = 'en',
     align = 'left',
     fontSize = 10,
-    color = [28, 25, 23],
+    color = BRAND.charcoal,
     weight = 'normal',
     maxWidth = null,
     lineHeight = 5,
@@ -241,7 +252,7 @@ function addFooter(doc, pageNumber, totalPages, pageWidth, pageHeight, lang) {
     lang,
     align: 'center',
     fontSize: 8,
-    color: [160, 150, 145],
+    color: [150, 145, 135],
   })
 }
 
@@ -249,17 +260,10 @@ function estimateCardHeight(description, category) {
   const descriptionLength = cleanText(description).length
   const descriptionLines = Math.max(1, Math.ceil(descriptionLength / 75))
 
-  return Math.max(
-    28,
-    18 + descriptionLines * 5.5 + (category ? 5 : 0)
-  )
+  return Math.max(28, 18 + descriptionLines * 5.5 + (category ? 5 : 0))
 }
 
-export async function exportItineraryPdf({
-  tripData,
-  plan,
-  lang = 'en',
-}) {
+export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   const activeLang = getActiveLang(lang)
   const isArabic = isArabicLang(activeLang)
 
@@ -298,16 +302,26 @@ export async function exportItineraryPdf({
   let y = margin
 
   // Header
-  doc.setFillColor(234, 88, 12)
+  doc.setFillColor(...BRAND.green)
   doc.roundedRect(margin, y, contentWidth, 34, 5, 5, 'F')
 
-  drawText(doc, isArabic ? 'شواف' : 'Shawaf', isArabic ? rightX - 7 : leftX + 7, y + 13, {
-    lang: activeLang,
-    align,
-    fontSize: 24,
-    color: [255, 255, 255],
-    weight: 'bold',
-  })
+  doc.setDrawColor(...BRAND.gold)
+  doc.setLineWidth(0.8)
+  doc.roundedRect(margin, y, contentWidth, 34, 5, 5, 'S')
+
+  drawText(
+    doc,
+    isArabic ? 'شواف' : 'Shawaf',
+    isArabic ? rightX - 7 : leftX + 7,
+    y + 13,
+    {
+      lang: activeLang,
+      align,
+      fontSize: 24,
+      color: BRAND.white,
+      weight: 'bold',
+    }
+  )
 
   drawText(
     doc,
@@ -318,22 +332,22 @@ export async function exportItineraryPdf({
       lang: activeLang,
       align,
       fontSize: 11,
-      color: [255, 255, 255],
+      color: [245, 245, 240],
     }
   )
 
   y += 44
 
   // Summary
-  doc.setFillColor(255, 247, 237)
-  doc.setDrawColor(254, 215, 170)
+  doc.setFillColor(...BRAND.greenSoft)
+  doc.setDrawColor(...BRAND.gold)
   doc.roundedRect(margin, y, contentWidth, 38, 4, 4, 'FD')
 
   drawText(doc, isArabic ? 'ملخص الرحلة' : 'Trip Summary', textX, y + 9, {
     lang: activeLang,
     align,
     fontSize: 13,
-    color: [194, 65, 12],
+    color: BRAND.green,
     weight: 'bold',
   })
 
@@ -358,7 +372,7 @@ export async function exportItineraryPdf({
     lang: activeLang,
     align,
     fontSize: 9.5,
-    color: [68, 64, 60],
+    color: BRAND.charcoal,
     maxWidth: contentWidth / 2 - 8,
   })
 
@@ -366,7 +380,7 @@ export async function exportItineraryPdf({
     lang: activeLang,
     align,
     fontSize: 9.5,
-    color: [68, 64, 60],
+    color: BRAND.charcoal,
     maxWidth: contentWidth / 2 - 8,
   })
 
@@ -374,7 +388,7 @@ export async function exportItineraryPdf({
     lang: activeLang,
     align,
     fontSize: 9.5,
-    color: [68, 64, 60],
+    color: BRAND.charcoal,
   })
 
   drawText(
@@ -386,7 +400,7 @@ export async function exportItineraryPdf({
       lang: activeLang,
       align,
       fontSize: 9.5,
-      color: [68, 64, 60],
+      color: BRAND.charcoal,
     }
   )
 
@@ -405,14 +419,14 @@ export async function exportItineraryPdf({
 
     y = addPageIfNeeded(doc, y, 20, pageHeight, margin)
 
-    doc.setFillColor(234, 88, 12)
+    doc.setFillColor(...BRAND.green)
     doc.roundedRect(margin, y, contentWidth, 12, 3, 3, 'F')
 
     drawText(doc, dayTitle, isArabic ? rightX - 5 : leftX + 5, y + 8, {
       lang: activeLang,
       align,
       fontSize: 11,
-      color: [255, 255, 255],
+      color: BRAND.white,
       weight: 'bold',
     })
 
@@ -428,8 +442,8 @@ export async function exportItineraryPdf({
 
       y = addPageIfNeeded(doc, y, cardHeight + 6, pageHeight, margin)
 
-      doc.setFillColor(250, 250, 249)
-      doc.setDrawColor(245, 245, 244)
+      doc.setFillColor(...BRAND.offWhite)
+      doc.setDrawColor(...BRAND.border)
       doc.roundedRect(margin, y, contentWidth, cardHeight, 3, 3, 'FD')
 
       const cardLeftX = margin + 5
@@ -442,17 +456,14 @@ export async function exportItineraryPdf({
         lang: activeLang,
         align,
         fontSize: 10.5,
-        color: [28, 25, 23],
+        color: BRAND.charcoal,
         weight: 'bold',
         maxWidth: contentWidth - 42,
         lineHeight: 5,
       })
 
       if (time) {
-        const previousR2L =
-          isArabic && typeof doc.setR2L === 'function'
-            ? true
-            : false
+        const previousR2L = isArabic && typeof doc.setR2L === 'function'
 
         if (previousR2L) doc.setR2L(false)
 
@@ -460,7 +471,7 @@ export async function exportItineraryPdf({
           lang: 'en',
           align: isArabic ? 'left' : 'right',
           fontSize: 9,
-          color: [234, 88, 12],
+          color: BRAND.green,
         })
 
         if (previousR2L) doc.setR2L(true)
@@ -473,7 +484,7 @@ export async function exportItineraryPdf({
           lang: activeLang,
           align,
           fontSize: 8.5,
-          color: [120, 113, 108],
+          color: BRAND.muted,
         })
 
         innerY += 5

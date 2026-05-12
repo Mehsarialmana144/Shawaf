@@ -64,7 +64,7 @@ const CATEGORY_LABELS_AR = {
   Restaurant: 'مطعم',
 }
 
-const COLORS = ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ea580c', '#c2410c']
+const COLORS = ['#006A4E', '#D4AF37', '#004D39', '#B89122', '#6FAE9B', '#DDD8C8']
 
 function getCityLabel(city, lang) {
   if (!city) return lang === 'ar' ? 'غير محدد' : 'Unknown'
@@ -109,7 +109,6 @@ export default function AdminAnalytics() {
     attractionsByCity: isArabic ? 'المعالم حسب المدينة' : 'Attractions by City',
     attractionsByCategory: isArabic ? 'المعالم حسب التصنيف' : 'Attractions by Category',
     reportsByStatus: isArabic ? 'البلاغات حسب الحالة' : 'Reports by Status',
-    value: isArabic ? 'العدد' : 'Count',
     noData: isArabic ? 'لا توجد بيانات' : 'No data available',
   }
 
@@ -182,7 +181,7 @@ export default function AdminAnalytics() {
   }
 
   const renderEmpty = () => (
-    <div className="h-64 flex items-center justify-center text-stone-400 text-sm">
+    <div className="h-64 flex items-center justify-center text-stone-400 text-sm text-center px-4">
       {text.noData}
     </div>
   )
@@ -191,14 +190,14 @@ export default function AdminAnalytics() {
     if (!data.length) return renderEmpty()
 
     return (
-      <div className="h-72" dir="ltr">
+      <div className="h-64 sm:h-72 w-full min-w-0" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-            <XAxis dataKey="name" stroke="#78716c" />
-            <YAxis stroke="#78716c" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#DDD8C8" />
+            <XAxis dataKey="name" stroke="#78716c" tick={{ fontSize: 11 }} />
+            <YAxis stroke="#78716c" tick={{ fontSize: 11 }} />
             <Tooltip />
-            <Bar dataKey="value" fill="#f97316" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="value" fill="#006A4E" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -209,14 +208,14 @@ export default function AdminAnalytics() {
     if (!data.length) return renderEmpty()
 
     return (
-      <div className="h-72" dir="ltr">
+      <div className="h-64 sm:h-72 w-full min-w-0" dir="ltr">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               dataKey="value"
               nameKey="name"
-              outerRadius={90}
+              outerRadius={80}
               label
             >
               {data.map((_, index) => (
@@ -225,7 +224,7 @@ export default function AdminAnalytics() {
             </Pie>
 
             <Tooltip />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -234,60 +233,60 @@ export default function AdminAnalytics() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#F5F5F0]">
+        <div className="w-8 h-8 border-4 border-[#006A4E] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="py-10 px-6 max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#333333]" dir="auto">
             {text.title}
           </h1>
 
-          <p className="text-sm text-stone-500 mt-1">
+          <p className="text-sm text-stone-500 mt-1 leading-relaxed" dir="auto">
             {text.subtitle}
           </p>
         </div>
 
-        <button onClick={loadAnalytics} className="btn-outline">
+        <button onClick={loadAnalytics} className="btn-outline shrink-0">
           {text.refresh}
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-5" dir="auto">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card p-6">
-          <h2 className="font-semibold text-stone-900 mb-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
+        <div className="card p-4 sm:p-6 min-w-0">
+          <h2 className="font-semibold text-[#333333] mb-5" dir="auto">
             {text.tripsByCity}
           </h2>
           {renderBarChart(tripsByCity)}
         </div>
 
-        <div className="card p-6">
-          <h2 className="font-semibold text-stone-900 mb-5">
+        <div className="card p-4 sm:p-6 min-w-0">
+          <h2 className="font-semibold text-[#333333] mb-5" dir="auto">
             {text.attractionsByCity}
           </h2>
           {renderBarChart(attractionsByCity)}
         </div>
 
-        <div className="card p-6">
-          <h2 className="font-semibold text-stone-900 mb-5">
+        <div className="card p-4 sm:p-6 min-w-0">
+          <h2 className="font-semibold text-[#333333] mb-5" dir="auto">
             {text.attractionsByCategory}
           </h2>
           {renderPieChart(attractionsByCategory)}
         </div>
 
-        <div className="card p-6">
-          <h2 className="font-semibold text-stone-900 mb-5">
+        <div className="card p-4 sm:p-6 min-w-0">
+          <h2 className="font-semibold text-[#333333] mb-5" dir="auto">
             {text.reportsByStatus}
           </h2>
           {renderPieChart(reportsByStatus)}
