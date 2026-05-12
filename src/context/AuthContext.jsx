@@ -3,6 +3,15 @@ import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext(null)
 
+function withTimeout(promise, ms = 8000) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Request timed out')), ms)
+    ),
+  ])
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [session, setSession] = useState(null)
@@ -15,33 +24,37 @@ export function AuthProvider({ children }) {
       return null
     }
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, role, created_at')
-      .eq('id', currentUser.id)
-      .single()
+    try {
+      const { data, error } = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('id, full_name, email, role, created_at')
+          .eq('id', currentUser.id)
+          .maybeSingle(),
+        8000
+      )
 
-    if (error) {
-      console.error('Fetch profile error:', error)
-      setProfile(null)
+      if (error) {
+        console.error('Fetch profile error:', error)
+        setProfile(null)
+        return null
+      }
+
+      setProfile(data)
+      return data
+    } catch (err) {
+      console.error('Fetch profile timeout/error:', err)
       return null
     }
-
-    setProfile(data)
-    return data
   }
 
-  useEffect(() => {
-    let mounted = true
+  const loadAuth = async ({ showLoading = false } = {}) => {
+    if (showLoading) setLoading(true)
 
-    const getInitialSession = async () => {
-      setLoading(true)
-
+    try {
       const {
         data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!mounted) return
+      } = await withTimeout(supabase.auth.getSession(), 8000)
 
       setSession(session)
       setUser(session?.user ?? null)
@@ -51,16 +64,61 @@ export function AuthProvider({ children }) {
       } else {
         setProfile(null)
       }
+    } catch (err) {
+      console.error('Auth load error:', err)
 
-      if (mounted) setLoading(false)
+      // لا نمسح اليوزر القديم عند الرجوع من Safari
+      // عشان ما يعلق الموقع أو يقلب الحالة فجأة
+      if (showLoading) {
+        setSession(null)
+        setUser(null)
+        setProfile(null)
+      }
+    } finally {
+      if (showLoading) setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    let mounted = true
+
+    const initialLoad = async () => {
+      setLoading(true)
+
+      try {
+        const {
+          data: { session },
+        } = await withTimeout(supabase.auth.getSession(), 8000)
+
+        if (!mounted) return
+
+        setSession(session)
+        setUser(session?.user ?? null)
+
+        if (session?.user) {
+          await fetchProfile(session.user)
+        } else {
+          setProfile(null)
+        }
+      } catch (err) {
+        console.error('Initial auth error:', err)
+
+        if (!mounted) return
+
+        setSession(null)
+        setUser(null)
+        setProfile(null)
+      } finally {
+        if (mounted) setLoading(false)
+      }
     }
 
-    getInitialSession()
+    initialLoad()
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setLoading(true)
+      if (!mounted) return
 
       setSession(session)
       setUser(session?.user ?? null)
@@ -74,9 +132,26 @@ export function AuthProvider({ children }) {
       setLoading(false)
     })
 
+    const handlePageShow = () => {
+      if (!mounted) return
+      loadAuth({ showLoading: false })
+    }
+
+    const handleVisibilityChange = () => {
+      if (!mounted) return
+      if (document.visibilityState === 'visible') {
+        loadAuth({ showLoading: false })
+      }
+    }
+
+    window.addEventListener('pageshow', handlePageShow)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       mounted = false
       subscription.unsubscribe()
+      window.removeEventListener('pageshow', handlePageShow)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 
@@ -110,6 +185,7 @@ export function AuthProvider({ children }) {
       setSession(data.session)
       setUser(data.session.user)
       await fetchProfile(data.session.user)
+      setLoading(false)
       return data
     }
 
@@ -123,9 +199,11 @@ export function AuthProvider({ children }) {
       setSession(signInData.session)
       setUser(signInData.session.user)
       await fetchProfile(signInData.session.user)
+      setLoading(false)
       return signInData
     }
 
+    setLoading(false)
     return data
   }
 
@@ -140,6 +218,7 @@ export function AuthProvider({ children }) {
     setSession(data.session)
     setUser(data.user)
     await fetchProfile(data.user)
+    setLoading(false)
 
     return data
   }
@@ -151,6 +230,7 @@ export function AuthProvider({ children }) {
     setSession(null)
     setUser(null)
     setProfile(null)
+    setLoading(false)
   }
 
   const isAdmin = profile?.role === 'admin'
@@ -165,6 +245,7 @@ export function AuthProvider({ children }) {
     signIn,
     signOut,
     fetchProfile,
+    refreshAuth: () => loadAuth({ showLoading: false }),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

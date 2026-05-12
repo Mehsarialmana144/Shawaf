@@ -4,8 +4,27 @@
 
 @layer base {
   :root {
-    --orange: #ea580c;
-    --orange-light: #fff7ed;
+    /* Shawaf Brand Guidelines */
+    --brand-green: #006A4E;
+    --brand-green-dark: #004D39;
+    --brand-green-soft: #E6F2EE;
+
+    --brand-charcoal: #333333;
+    --brand-charcoal-soft: #4B4B4B;
+
+    --brand-offwhite: #F5F5F0;
+    --brand-white: #FFFFFF;
+
+    --brand-gold: #D4AF37;
+    --brand-gold-dark: #B89122;
+    --brand-gold-soft: #FBF6E3;
+
+    --brand-border: #DDD8C8;
+    --brand-muted: #78716C;
+  }
+
+  html {
+    background-color: var(--brand-offwhite);
   }
 
   html[dir="rtl"] body {
@@ -17,35 +36,85 @@
   }
 
   body {
-    background-color: #f5f5f4;
-    color: #1c1917;
-    font-family: 'Cairo', sans-serif;
+    background-color: var(--brand-offwhite);
+    color: var(--brand-charcoal);
+    font-family: 'Cairo', 'Inter', system-ui, sans-serif;
+  }
+
+  ::selection {
+    background-color: var(--brand-gold);
+    color: var(--brand-charcoal);
+  }
+
+  a {
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2.5 rounded-full transition-colors duration-200 inline-flex items-center gap-2;
+    @apply text-white font-semibold px-6 py-2.5 rounded-full transition-all duration-200 inline-flex items-center gap-2 shadow-sm;
+    background-color: var(--brand-green);
+    border: 1px solid var(--brand-green);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--brand-green-dark);
+    border-color: var(--brand-green-dark);
+    box-shadow: 0 8px 20px rgba(0, 106, 78, 0.18);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 
   .btn-outline {
-    @apply border border-stone-300 hover:border-orange-500 text-stone-700 hover:text-orange-600 font-medium px-6 py-2.5 rounded-full transition-colors duration-200 inline-flex items-center gap-2;
+    @apply font-medium px-6 py-2.5 rounded-full transition-all duration-200 inline-flex items-center gap-2;
+    color: var(--brand-charcoal);
+    border: 1px solid var(--brand-border);
+    background-color: var(--brand-white);
+  }
+
+  .btn-outline:hover {
+    color: var(--brand-green);
+    border-color: var(--brand-gold);
+    background-color: var(--brand-gold-soft);
+    box-shadow: 0 6px 16px rgba(212, 175, 55, 0.14);
   }
 
   .card {
-    @apply bg-white rounded-2xl border border-stone-200 shadow-sm;
+    @apply bg-white rounded-2xl border shadow-sm;
+    border-color: var(--brand-border);
+  }
+
+  .card:hover {
+    box-shadow: 0 10px 28px rgba(51, 51, 51, 0.06);
   }
 
   .input-field {
-    @apply w-full border border-stone-300 rounded-xl px-4 py-3 text-stone-800 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all;
+    @apply w-full border rounded-xl px-4 py-3 text-stone-800 focus:outline-none transition-all;
+    border-color: var(--brand-border);
+    background-color: var(--brand-white);
+    color: var(--brand-charcoal);
+  }
+
+  .input-field:focus {
+    border-color: var(--brand-green);
+    box-shadow: 0 0 0 3px rgba(0, 106, 78, 0.16);
   }
 
   .section-title {
-    @apply text-3xl font-bold text-stone-900 text-center;
+    @apply text-3xl font-bold text-center;
+    color: var(--brand-charcoal);
   }
 
   .section-divider {
-    @apply w-12 h-1 bg-orange-500 mx-auto mt-3 mb-10 rounded-full;
+    @apply w-12 h-1 mx-auto mt-3 mb-10 rounded-full;
+    background-color: var(--brand-gold);
   }
 }
 
@@ -60,23 +129,180 @@
 .step-line {
   flex: 1;
   height: 2px;
-  background: #e7e5e4;
+  background: var(--brand-border);
 }
+
 .step-line.active {
-  background: #ea580c;
+  background: var(--brand-green);
 }
 
 /* Selection card selected state */
 .sel-card-selected {
-  border-color: #ea580c;
-  background-color: #fff7ed;
-  color: #ea580c;
+  border-color: var(--brand-green);
+  background-color: var(--brand-green-soft);
+  color: var(--brand-green);
+}
+
+/* Brand utility helpers */
+.brand-bg {
+  background-color: var(--brand-green);
+}
+
+.brand-bg-dark {
+  background-color: var(--brand-green-dark);
+}
+
+.brand-bg-soft {
+  background-color: var(--brand-green-soft);
+}
+
+.brand-bg-gold {
+  background-color: var(--brand-gold);
+}
+
+.brand-text {
+  color: var(--brand-green);
+}
+
+.brand-text-dark {
+  color: var(--brand-green-dark);
+}
+
+.brand-text-gold {
+  color: var(--brand-gold);
+}
+
+.brand-text-charcoal {
+  color: var(--brand-charcoal);
+}
+
+.brand-border {
+  border-color: var(--brand-border);
+}
+
+.brand-border-green {
+  border-color: var(--brand-green);
+}
+
+.brand-border-gold {
+  border-color: var(--brand-gold);
+}
+
+/* Automatic override for old orange Tailwind classes */
+/* This helps apply the new identity without editing every JSX file immediately. */
+
+.bg-orange-50 {
+  background-color: var(--brand-green-soft) !important;
+}
+
+.bg-orange-100 {
+  background-color: var(--brand-gold-soft) !important;
+}
+
+.bg-orange-200 {
+  background-color: #EFE1A8 !important;
+}
+
+.bg-orange-300 {
+  background-color: #E5CB6D !important;
+}
+
+.bg-orange-400 {
+  background-color: var(--brand-gold) !important;
+}
+
+.bg-orange-500,
+.bg-orange-600 {
+  background-color: var(--brand-green) !important;
+}
+
+.bg-orange-700,
+.bg-orange-800,
+.hover\:bg-orange-700:hover,
+.hover\:bg-orange-600:hover {
+  background-color: var(--brand-green-dark) !important;
+}
+
+.text-orange-50,
+.text-orange-100 {
+  color: var(--brand-green-soft) !important;
+}
+
+.text-orange-300,
+.text-orange-400 {
+  color: var(--brand-gold) !important;
+}
+
+.text-orange-500,
+.text-orange-600,
+.text-orange-700 {
+  color: var(--brand-green) !important;
+}
+
+.hover\:text-orange-600:hover,
+.hover\:text-orange-700:hover,
+.hover\:text-orange-500:hover {
+  color: var(--brand-green-dark) !important;
+}
+
+.border-orange-100,
+.border-orange-200,
+.border-orange-300 {
+  border-color: rgba(212, 175, 55, 0.45) !important;
+}
+
+.border-orange-400,
+.border-orange-500,
+.border-orange-600 {
+  border-color: var(--brand-green) !important;
+}
+
+.hover\:border-orange-300:hover,
+.hover\:border-orange-400:hover,
+.hover\:border-orange-500:hover {
+  border-color: var(--brand-gold) !important;
+}
+
+.ring-orange-400,
+.focus\:ring-orange-400:focus {
+  --tw-ring-color: rgba(0, 106, 78, 0.25) !important;
+}
+
+.accent-orange-500 {
+  accent-color: var(--brand-green) !important;
+}
+
+.shadow-orange-200 {
+  --tw-shadow-color: rgba(212, 175, 55, 0.28) !important;
+}
+
+.hover\:shadow-orange-500\/30:hover {
+  --tw-shadow-color: rgba(0, 106, 78, 0.24) !important;
+}
+
+/* Gradients and hero visual helpers */
+.brand-hero-gradient {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(212, 175, 55, 0.22), transparent 32%),
+    radial-gradient(circle at 80% 30%, rgba(0, 106, 78, 0.32), transparent 34%),
+    linear-gradient(135deg, #002F24 0%, #006A4E 48%, #0B3B2F 100%);
+}
+
+.brand-card-gradient {
+  background:
+    linear-gradient(135deg, rgba(0, 106, 78, 0.96), rgba(0, 77, 57, 0.96)),
+    radial-gradient(circle at top right, rgba(212, 175, 55, 0.22), transparent 38%);
+}
+
+.brand-gold-gradient {
+  background: linear-gradient(135deg, #D4AF37 0%, #F2D978 45%, #B89122 100%);
 }
 
 /* RTL adjustments */
 [dir="rtl"] .rtl-flip {
   transform: scaleX(-1);
 }
+
 /* RTL / LTR safety fixes */
 html[dir='rtl'] {
   direction: rtl;
@@ -127,4 +353,24 @@ html[lang='ar'] body {
 /* Better English rendering */
 html[lang='en'] body {
   font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Scrollbar styling aligned with brand */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--brand-offwhite);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 106, 78, 0.35);
+  border-radius: 999px;
+  border: 2px solid var(--brand-offwhite);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 106, 78, 0.55);
 }
