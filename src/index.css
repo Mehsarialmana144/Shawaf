@@ -374,3 +374,108 @@ html[lang='en'] body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 106, 78, 0.55);
 }
+/* Mobile layout safety fixes */
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+main {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Prevent long Arabic/English mixed text from breaking mobile layout */
+h1,
+h2,
+h3,
+p,
+span,
+div,
+button,
+a {
+  overflow-wrap: anywhere;
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+    line-height: 2.2rem;
+  }
+
+  .card {
+    border-radius: 1rem;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    width: 100%;
+    justify-content: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .input-field {
+    font-size: 16px;
+  }
+
+  /* Fix horizontal scroll caused by wide grids */
+  .grid {
+    min-width: 0;
+  }
+
+  /* Fix planner step indicator on mobile */
+  .step-line {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Make tables scroll instead of breaking page */
+  table {
+    min-width: 640px;
+  }
+
+  .overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fix Leaflet/map on mobile */
+  .leaflet-container {
+    min-height: 320px;
+  }
+}
+
+/* Extra small phones */
+@media (max-width: 420px) {
+  .btn-primary,
+  .btn-outline {
+    font-size: 0.875rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}

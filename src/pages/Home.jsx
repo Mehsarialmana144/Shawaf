@@ -338,5 +338,5 @@ export default function Home() {
       <TestimonialsSection />
       <CTABannerSection />
     </>
-  )
+  ) 
 }
