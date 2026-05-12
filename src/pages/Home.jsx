@@ -14,19 +14,28 @@ function HeroSection() {
       className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden"
       style={{
         background:
-          'linear-gradient(135deg, #1c0a00 0%, #3d1a00 40%, #6b3000 100%)',
+          'radial-gradient(circle at 18% 25%, rgba(212, 175, 55, 0.24), transparent 32%), radial-gradient(circle at 82% 30%, rgba(255, 255, 255, 0.10), transparent 34%), linear-gradient(135deg, #002F24 0%, #006A4E 48%, #0B3B2F 100%)',
       }}
     >
       <div
-        className="absolute inset-0 opacity-20"
+        className="absolute inset-0 opacity-40"
         style={{
           backgroundImage:
-            'radial-gradient(circle at 20% 50%, #ea580c 0%, transparent 50%), radial-gradient(circle at 80% 20%, #c2410c 0%, transparent 50%)',
+            'radial-gradient(circle at 20% 50%, rgba(212, 175, 55, 0.28) 0%, transparent 42%), radial-gradient(circle at 80% 20%, rgba(245, 245, 240, 0.14) 0%, transparent 38%), linear-gradient(120deg, rgba(0, 47, 36, 0.45), rgba(0, 106, 78, 0.05))',
+        }}
+      />
+
+      <div
+        className="absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage:
+            'linear-gradient(45deg, rgba(255,255,255,0.35) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.35) 25%, transparent 25%)',
+          backgroundSize: '80px 80px',
         }}
       />
 
       <div className="relative z-10 max-w-4xl mx-auto">
-        <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-orange-300 text-sm px-4 py-1.5 rounded-full mb-8 backdrop-blur-sm">
+        <div className="inline-flex items-center gap-2 bg-white/10 border border-[#D4AF37]/40 text-[#D4AF37] text-sm px-4 py-1.5 rounded-full mb-8 backdrop-blur-sm">
           {t('heroTag')}
         </div>
 
@@ -40,12 +49,12 @@ function HeroSection() {
           {t('heroTitle')}
         </h1>
 
-        <p className="text-orange-400 text-xl font-semibold mb-6" dir="auto">
+        <p className="text-[#D4AF37] text-xl font-semibold mb-6" dir="auto">
           {t('heroBrand')}
         </p>
 
         <p
-          className="text-stone-300 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed"
+          className="text-[#F5F5F0]/85 text-base sm:text-lg max-w-2xl mx-auto mb-10 leading-relaxed"
           dir="auto"
         >
           {t('heroSub')}
@@ -54,7 +63,7 @@ function HeroSection() {
         <div className="flex flex-wrap items-center justify-center gap-4 mb-16">
           <button
             onClick={() => navigate(user ? '/planner' : '/signup')}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-7 py-3.5 rounded-full transition-all shadow-lg hover:shadow-orange-500/30 flex items-center gap-2"
+            className="bg-[#D4AF37] hover:bg-[#B89122] text-[#333333] font-semibold px-7 py-3.5 rounded-full transition-all shadow-lg hover:shadow-[#D4AF37]/30 flex items-center gap-2"
           >
             {t('startPlanning')} <span>{arrow}</span>
           </button>
@@ -65,7 +74,7 @@ function HeroSection() {
                 .getElementById('features')
                 ?.scrollIntoView({ behavior: 'smooth' })
             }
-            className="border border-white/30 hover:border-white/60 text-white font-medium px-7 py-3.5 rounded-full transition-all backdrop-blur-sm"
+            className="border border-[#F5F5F0]/40 hover:border-[#D4AF37] text-[#F5F5F0] hover:text-[#D4AF37] font-medium px-7 py-3.5 rounded-full transition-all backdrop-blur-sm"
           >
             {t('learnMore')}
           </button>
@@ -80,12 +89,12 @@ function HeroSection() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-4"
+              className="bg-white/10 backdrop-blur-sm border border-[#D4AF37]/25 rounded-2xl p-4"
             >
               <div className="text-2xl font-bold text-white" dir="auto">
                 {stat.val}
               </div>
-              <div className="text-xs text-stone-400 mt-1" dir="auto">
+              <div className="text-xs text-[#F5F5F0]/65 mt-1" dir="auto">
                 {stat.label}
               </div>
             </div>
@@ -94,8 +103,8 @@ function HeroSection() {
       </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <div className="w-6 h-10 border-2 border-white/30 rounded-full flex items-start justify-center pt-1.5">
-          <div className="w-1.5 h-1.5 bg-white/60 rounded-full" />
+        <div className="w-6 h-10 border-2 border-[#D4AF37]/50 rounded-full flex items-start justify-center pt-1.5">
+          <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full" />
         </div>
       </div>
     </section>
@@ -115,7 +124,7 @@ function FeaturesSection() {
   ]
 
   return (
-    <section id="features" className="py-20 px-6 bg-stone-100">
+    <section id="features" className="py-20 px-6 bg-[#F5F5F0]">
       <div className="max-w-6xl mx-auto">
         <h2 className="section-title">{t('whyChoose')}</h2>
         <div className="section-divider" />
@@ -126,11 +135,11 @@ function FeaturesSection() {
               key={f.title}
               className="card p-6 hover:shadow-md transition-shadow"
             >
-              <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-2xl mb-4">
+              <div className="w-12 h-12 bg-[#E6F2EE] border border-[#D4AF37]/30 rounded-xl flex items-center justify-center text-2xl mb-4">
                 {f.icon}
               </div>
 
-              <h3 className="font-semibold text-stone-900 text-lg mb-2" dir="auto">
+              <h3 className="font-semibold text-[#333333] text-lg mb-2" dir="auto">
                 {f.title}
               </h3>
 
@@ -171,14 +180,14 @@ function HowItWorksSection() {
               className="flex flex-col items-center text-center relative"
             >
               {i < displayedSteps.length - 1 && (
-                <div className="hidden lg:block absolute top-6 start-[calc(50%+28px)] w-full h-0.5 bg-stone-200 z-0" />
+                <div className="hidden lg:block absolute top-6 start-[calc(50%+28px)] w-full h-0.5 bg-[#DDD8C8] z-0" />
               )}
 
-              <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-orange-200 relative z-10 mb-4">
+              <div className="w-14 h-14 bg-[#006A4E] border border-[#D4AF37]/40 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg relative z-10 mb-4">
                 {step.num}
               </div>
 
-              <h3 className="font-semibold text-stone-900 mb-2" dir="auto">
+              <h3 className="font-semibold text-[#333333] mb-2" dir="auto">
                 {step.title}
               </h3>
 
@@ -209,7 +218,7 @@ function TestimonialsSection() {
   ]
 
   return (
-    <section className="py-20 px-6 bg-stone-100">
+    <section className="py-20 px-6 bg-[#F5F5F0]">
       <div className="max-w-6xl mx-auto">
         <h2 className="section-title">{t('travelers_say')}</h2>
         <div className="section-divider" />
@@ -222,7 +231,7 @@ function TestimonialsSection() {
                   <span
                     key={i}
                     className={`text-lg ${
-                      i < 4 ? 'text-orange-400' : 'text-orange-300'
+                      i < 4 ? 'text-[#D4AF37]' : 'text-[#D4AF37]/50'
                     }`}
                   >
                     ★
@@ -238,9 +247,9 @@ function TestimonialsSection() {
               </p>
 
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-orange-100 rounded-full flex items-center justify-center">
+                <div className="w-9 h-9 bg-[#E6F2EE] border border-[#D4AF37]/30 rounded-full flex items-center justify-center">
                   <svg
-                    className="w-5 h-5 text-orange-400"
+                    className="w-5 h-5 text-[#006A4E]"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
@@ -249,7 +258,7 @@ function TestimonialsSection() {
                 </div>
 
                 <div>
-                  <div className="font-semibold text-stone-800 text-sm" dir="auto">
+                  <div className="font-semibold text-[#333333] text-sm" dir="auto">
                     {testimonial.name}
                   </div>
                   <div className="text-xs text-stone-400" dir="auto">
@@ -272,31 +281,48 @@ function CTABannerSection() {
   const arrow = isRTL ? '←' : '→'
 
   return (
-    <section className="py-6 px-6 bg-stone-100">
+    <section className="py-6 px-6 bg-[#F5F5F0]">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-orange-500 rounded-3xl px-8 py-14 text-center text-white">
-          <div className="text-5xl mb-6">🏅</div>
-
-          <h2
-            className="text-3xl sm:text-4xl font-bold mb-3"
+        <div
+          className="rounded-3xl px-8 py-14 text-center text-white border border-[#D4AF37]/35 shadow-xl overflow-hidden relative"
+          style={{
+            background:
+              'radial-gradient(circle at 18% 25%, rgba(212, 175, 55, 0.22), transparent 34%), linear-gradient(135deg, #003B2D 0%, #006A4E 55%, #002F24 100%)',
+          }}
+        >
+          <div
+            className="absolute inset-0 opacity-[0.09]"
             style={{
-              fontFamily: isRTL ? 'Cairo, sans-serif' : 'Inter, sans-serif',
+              backgroundImage:
+                'linear-gradient(45deg, rgba(245,245,240,0.45) 25%, transparent 25%), linear-gradient(-45deg, rgba(245,245,240,0.45) 25%, transparent 25%)',
+              backgroundSize: '70px 70px',
             }}
-            dir="auto"
-          >
-            {t('ctaTitle')}
-          </h2>
+          />
 
-          <p className="text-orange-100 mb-8 text-base" dir="auto">
-            {t('ctaSub')}
-          </p>
+          <div className="relative z-10">
+            <div className="text-5xl mb-6">🏅</div>
 
-          <Link
-            to={user ? '/planner' : '/signup'}
-            className="inline-flex items-center gap-2 bg-white text-orange-600 font-semibold px-8 py-3.5 rounded-full hover:bg-orange-50 transition-colors shadow-lg"
-          >
-            {t('ctaBtn')} <span>{arrow}</span>
-          </Link>
+            <h2
+              className="text-3xl sm:text-4xl font-bold mb-3"
+              style={{
+                fontFamily: isRTL ? 'Cairo, sans-serif' : 'Inter, sans-serif',
+              }}
+              dir="auto"
+            >
+              {t('ctaTitle')}
+            </h2>
+
+            <p className="text-[#F5F5F0]/80 mb-8 text-base" dir="auto">
+              {t('ctaSub')}
+            </p>
+
+            <Link
+              to={user ? '/planner' : '/signup'}
+              className="inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#B89122] text-[#333333] font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg"
+            >
+              {t('ctaBtn')} <span>{arrow}</span>
+            </Link>
+          </div>
         </div>
       </div>
     </section>
