@@ -87,7 +87,7 @@ export default function SignUp() {
 
       <div className="card w-full max-w-md p-5 sm:p-8">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-[#D4AF37] text-xl">✨</span>
+          <span className="text-[#D4AF37] text-xl"></span>
 
           <h2 className="text-xl sm:text-2xl font-bold text-[#333333]" dir="auto">
             {t('signUpTitle')}
