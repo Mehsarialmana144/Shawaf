@@ -266,7 +266,8 @@ export default function StepOne({ data, onChange, onNext }) {
 
           <input
             type="date"
-            className="input-field min-h-[52px]"
+            className="block w-full h-14 min-h-0 max-w-full rounded-2xl border border-[#DDD8C8] bg-white px-4 py-0 text-base leading-none text-[#333333] shadow-none outline-none transition-colors focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/15"
+            style={{ WebkitAppearance: 'none', appearance: 'none' }}
             value={data.startDate}
             onChange={(e) => onChange({ startDate: e.target.value })}
           />
@@ -280,7 +281,8 @@ export default function StepOne({ data, onChange, onNext }) {
 
           <input
             type="date"
-            className="input-field min-h-[52px]"
+            className="block w-full h-14 min-h-0 max-w-full rounded-2xl border border-[#DDD8C8] bg-white px-4 py-0 text-base leading-none text-[#333333] shadow-none outline-none transition-colors focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/15"
+            style={{ WebkitAppearance: 'none', appearance: 'none' }}
             value={data.endDate}
             min={data.startDate}
             onChange={(e) => onChange({ endDate: e.target.value })}

@@ -8,6 +8,7 @@ export default function UpdatePassword() {
   const navigate = useNavigate()
 
   const isArabic = lang === 'ar'
+  const logoSrc = '/shawaf-logo.png'
 
   const text = {
     title: isArabic ? 'تحديث كلمة المرور' : 'Update Password',
@@ -127,14 +128,12 @@ export default function UpdatePassword() {
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex flex-col items-center justify-center px-4 py-10 sm:py-12 overflow-hidden">
       <div className="flex flex-col items-center mb-8 text-center">
-        <div className="w-16 h-16 bg-[#006A4E] border border-[#D4AF37]/40 rounded-2xl flex items-center justify-center shadow-lg mb-3">
-          <svg
-            className="w-8 h-8 text-white"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-          </svg>
+        <div className="w-24 h-24 rounded-3xl bg-white/80 border border-[#D4AF37]/40 flex items-center justify-center shadow-lg mb-3 overflow-hidden">
+          <img
+            src={logoSrc}
+            alt="Shawaf Logo"
+            className="w-full h-full object-contain p-2"
+          />
         </div>
 
         <h1 className="text-2xl font-bold text-[#333333] whitespace-nowrap">
