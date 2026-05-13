@@ -88,32 +88,39 @@ export default function StepOne({ data, onChange, onNext }) {
   const days = daysBetween(data.startDate, data.endDate)
 
   const text = {
-    chooseCities: isArabic ? 'اختر مدينة أو أكثر' : 'Choose one or more cities',
-    selectedCities: isArabic ? 'المدن المختارة' : 'Selected cities',
+    destinationCity: isArabic ? 'مدينة الوجهة' : 'Destination City',
+    chooseCity: isArabic ? 'اختر مدينة...' : 'Choose a city...',
+    selectedCities: isArabic ? 'المدن المختارة' : 'Selected Cities',
     multiCityHint: isArabic
-      ? 'يمكنك اختيار أكثر من مدينة، وسيتم ترتيب الرحلة حسب ترتيب اختيارك.'
-      : 'You can choose multiple cities. The trip will follow the order you select.',
+      ? 'يمكنك اختيار مدينة واحدة أو أكثر للرحلة. سيتم ترتيب الرحلة حسب ترتيب اختيارك.'
+      : 'You can choose one or more cities. The trip will follow the order you select.',
     removeCity: isArabic ? 'حذف المدينة' : 'Remove city',
+    alreadySelected: isArabic
+      ? 'هذه المدينة مختارة بالفعل.'
+      : 'This city is already selected.',
     cityRequired: isArabic
-      ? 'الرجاء اختيار مدينة واحدة على الأقل'
-      : 'Please select at least one destination city',
+      ? 'الرجاء اختيار مدينة واحدة على الأقل.'
+      : 'Please select at least one destination city.',
     datesRequired: isArabic
-      ? 'الرجاء اختيار تاريخ البداية والنهاية'
-      : 'Please select start and end dates',
+      ? 'الرجاء اختيار تاريخ البداية والنهاية.'
+      : 'Please select start and end dates.',
     tripTypeRequired: isArabic
-      ? 'الرجاء اختيار نوع الرحلة'
-      : 'Please select a trip type',
+      ? 'الرجاء اختيار نوع الرحلة.'
+      : 'Please select a trip type.',
     daysLessThanCities: isArabic
       ? 'عدد الأيام يجب أن يكون مساويًا أو أكثر من عدد المدن المختارة.'
       : 'The number of days should be at least the number of selected cities.',
   }
 
-  const toggleCity = (city) => {
-    const exists = selectedCities.includes(city)
+  const addCity = (city) => {
+    if (!city) return
 
-    const updatedCities = exists
-      ? selectedCities.filter((item) => item !== city)
-      : [...selectedCities, city]
+    if (selectedCities.includes(city)) {
+      alert(text.alreadySelected)
+      return
+    }
+
+    const updatedCities = [...selectedCities, city]
 
     onChange({
       cities: updatedCities,
@@ -164,47 +171,62 @@ export default function StepOne({ data, onChange, onNext }) {
           {t('planNewTrip')}
         </h2>
 
-        <p className="text-sm sm:text-base text-stone-500 leading-relaxed" dir="auto">
+        <p
+          className="text-sm sm:text-base text-stone-500 leading-relaxed"
+          dir="auto"
+        >
           {t('step1Sub')}
         </p>
       </div>
 
-      {/* Destination Cities */}
+      {/* Destination City Dropdown */}
       <div className="mb-5">
         <label className="flex items-center gap-2 text-sm font-semibold text-[#333333] mb-2">
           <span className="text-[#006A4E]">📍</span>
-          <span dir="auto">{text.chooseCities}</span>
+          <span dir="auto">{text.destinationCity}</span>
         </label>
 
         <p className="text-xs text-stone-400 mb-3 leading-relaxed" dir="auto">
           {text.multiCityHint}
         </p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-          {CITIES.map((city) => {
-            const selected = selectedCities.includes(city)
+        <div className="relative">
+          <select
+            className="input-field appearance-none pe-10 ps-4 text-sm sm:text-base min-h-[52px]"
+            value=""
+            onChange={(e) => addCity(e.target.value)}
+            dir={isArabic ? 'rtl' : 'ltr'}
+          >
+            <option value="">{text.chooseCity}</option>
 
-            return (
-              <button
-                key={city}
-                type="button"
-                onClick={() => toggleCity(city)}
-                className={`min-w-0 rounded-xl border-2 px-3 py-3 text-sm font-medium transition-all text-center ${
-                  selected
-                    ? 'border-[#006A4E] bg-[#E6F2EE] text-[#006A4E]'
-                    : 'border-stone-200 bg-white text-stone-700 hover:border-[#D4AF37] hover:bg-[#FBF6E3]'
-                }`}
-                dir="auto"
-              >
+            {CITIES.map((city) => (
+              <option key={city} value={city}>
                 {getCityLabel(city, lang)}
-              </button>
-            )
-          })}
+              </option>
+            ))}
+          </select>
+
+          <svg
+            className="absolute end-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400 pointer-events-none"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
         </div>
 
         {selectedCities.length > 0 && (
           <div className="mt-4 bg-[#F5F5F0] border border-[#DDD8C8] rounded-2xl p-3">
-            <div className="text-xs font-semibold text-stone-500 mb-2" dir="auto">
+            <div
+              className="text-xs font-semibold text-stone-500 mb-2"
+              dir="auto"
+            >
               {text.selectedCities}
             </div>
 
@@ -291,7 +313,9 @@ export default function StepOne({ data, onChange, onNext }) {
               })
             }
             className="w-11 h-11 border-2 border-stone-200 rounded-full text-stone-600 font-bold text-xl flex items-center justify-center hover:border-[#D4AF37] hover:text-[#006A4E] transition-colors"
-            aria-label={isArabic ? 'تقليل عدد الأشخاص' : 'Decrease number of people'}
+            aria-label={
+              isArabic ? 'تقليل عدد الأشخاص' : 'Decrease number of people'
+            }
           >
             -
           </button>
@@ -308,7 +332,9 @@ export default function StepOne({ data, onChange, onNext }) {
               })
             }
             className="w-11 h-11 border-2 border-stone-200 rounded-full text-stone-600 font-bold text-xl flex items-center justify-center hover:border-[#D4AF37] hover:text-[#006A4E] transition-colors"
-            aria-label={isArabic ? 'زيادة عدد الأشخاص' : 'Increase number of people'}
+            aria-label={
+              isArabic ? 'زيادة عدد الأشخاص' : 'Increase number of people'
+            }
           >
             +
           </button>
@@ -317,7 +343,10 @@ export default function StepOne({ data, onChange, onNext }) {
 
       {/* Trip Type */}
       <div className="mb-8">
-        <label className="text-sm font-semibold text-[#333333] block mb-3" dir="auto">
+        <label
+          className="text-sm font-semibold text-[#333333] block mb-3"
+          dir="auto"
+        >
           {t('tripType')}
         </label>
 
