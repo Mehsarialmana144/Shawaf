@@ -1,10 +1,12 @@
 import { jsPDF } from 'jspdf'
 
-const ARABIC_FONT_PATH = '/fonts/NotoNaskhArabic-Regular.ttf'
+const PUBLIC_BASE_URL = import.meta.env.BASE_URL || '/'
+
+const ARABIC_FONT_PATH = `${PUBLIC_BASE_URL}fonts/NotoNaskhArabic-Regular.ttf`
 const ARABIC_FONT_FILE = 'NotoNaskhArabic-Regular.ttf'
 const ARABIC_FONT_NAME = 'NotoNaskhArabic'
 
-const LOGO_PATH = '/shawaf-logo.png'
+const LOGO_PATH = `${PUBLIC_BASE_URL}shawaf-logo.png`
 
 const BRAND = {
   green: [0, 106, 78],
@@ -67,6 +69,7 @@ const BUDGET_LABELS_AR = {
 
 let cachedArabicFontBase64 = null
 let cachedLogoDataUrl = null
+let arabicFontLoaded = false
 
 function getActiveLang(lang) {
   return (
@@ -174,52 +177,59 @@ function getCityDisplay(tripData, plan, lang) {
 async function loadArabicFontAsBase64() {
   if (cachedArabicFontBase64) return cachedArabicFontBase64
 
-  const response = await fetch(ARABIC_FONT_PATH)
+  try {
+    const response = await fetch(ARABIC_FONT_PATH)
 
-  if (!response.ok) {
-    throw new Error(`Arabic font not found at public/fonts/${ARABIC_FONT_FILE}`)
+    if (!response.ok) {
+      console.warn(`Arabic font not found at: ${ARABIC_FONT_PATH}`)
+      return null
+    }
+
+    const buffer = await response.arrayBuffer()
+    const bytes = new Uint8Array(buffer)
+
+    let binary = ''
+    for (let i = 0; i < bytes.length; i += 1) {
+      binary += String.fromCharCode(bytes[i])
+    }
+
+    cachedArabicFontBase64 = btoa(binary)
+    return cachedArabicFontBase64
+  } catch (error) {
+    console.warn('Arabic font failed to load:', error)
+    return null
   }
-
-  const buffer = await response.arrayBuffer()
-  const bytes = new Uint8Array(buffer)
-
-  let binary = ''
-  for (let i = 0; i < bytes.length; i += 1) {
-    binary += String.fromCharCode(bytes[i])
-  }
-
-  cachedArabicFontBase64 = btoa(binary)
-  return cachedArabicFontBase64
 }
 
 async function loadImageAsDataUrl(path) {
-  const response = await fetch(path)
+  try {
+    const response = await fetch(path)
 
-  if (!response.ok) {
-    throw new Error(`Image not found at ${path}`)
+    if (!response.ok) {
+      console.warn(`Image not found at: ${path}`)
+      return null
+    }
+
+    const blob = await response.blob()
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+
+      reader.onloadend = () => resolve(reader.result)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+  } catch (error) {
+    console.warn('Image failed to load:', error)
+    return null
   }
-
-  const blob = await response.blob()
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-
-    reader.onloadend = () => resolve(reader.result)
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
 }
 
 async function loadLogoDataUrl() {
   if (cachedLogoDataUrl) return cachedLogoDataUrl
 
-  try {
-    cachedLogoDataUrl = await loadImageAsDataUrl(LOGO_PATH)
-    return cachedLogoDataUrl
-  } catch (error) {
-    console.warn('Shawaf logo could not be loaded for PDF:', error)
-    return null
-  }
+  cachedLogoDataUrl = await loadImageAsDataUrl(LOGO_PATH)
+  return cachedLogoDataUrl
 }
 
 function getImageFormat(dataUrl) {
@@ -233,7 +243,7 @@ function prepareText(doc, value, lang) {
 
   if (!isArabicLang(lang)) return text
 
-  if (typeof doc.processArabic === 'function') {
+  if (arabicFontLoaded && typeof doc.processArabic === 'function') {
     return doc.processArabic(text)
   }
 
@@ -241,11 +251,17 @@ function prepareText(doc, value, lang) {
 }
 
 function setPdfFont(doc, lang, weight = 'normal') {
-  if (isArabicLang(lang)) {
-    doc.setFont(ARABIC_FONT_NAME, 'normal')
-  } else {
-    doc.setFont('helvetica', weight)
+  if (isArabicLang(lang) && arabicFontLoaded) {
+    try {
+      doc.setFont(ARABIC_FONT_NAME, 'normal')
+      return
+    } catch {
+      doc.setFont('helvetica', 'normal')
+      return
+    }
   }
+
+  doc.setFont('helvetica', weight)
 }
 
 function drawText(doc, text, x, y, options = {}) {
@@ -307,9 +323,58 @@ function estimateCardHeight(description, category, lang) {
   return Math.max(30, 20 + descriptionLines * 5.5 + (category ? 5 : 0))
 }
 
+function normalizePlan(plan) {
+  if (!plan) return { itinerary: [] }
+
+  if (Array.isArray(plan?.itinerary)) return plan
+  if (Array.isArray(plan?.days)) return { ...plan, itinerary: plan.days }
+
+  if (plan?.ai_plan) {
+    if (Array.isArray(plan.ai_plan?.itinerary)) return plan.ai_plan
+    if (Array.isArray(plan.ai_plan?.days)) {
+      return { ...plan.ai_plan, itinerary: plan.ai_plan.days }
+    }
+  }
+
+  return { ...plan, itinerary: [] }
+}
+
+function normalizeTripData(tripData, plan) {
+  return {
+    ...tripData,
+    startDate:
+      tripData?.startDate ||
+      tripData?.start_date ||
+      tripData?.trip_start_date ||
+      plan?.startDate ||
+      plan?.start_date ||
+      '',
+    endDate:
+      tripData?.endDate ||
+      tripData?.end_date ||
+      tripData?.trip_end_date ||
+      plan?.endDate ||
+      plan?.end_date ||
+      '',
+    numberOfPeople:
+      tripData?.numberOfPeople ||
+      tripData?.number_of_people ||
+      tripData?.people ||
+      plan?.numberOfPeople ||
+      plan?.number_of_people ||
+      '',
+    budget: tripData?.budget || plan?.budget || '',
+    city: tripData?.city || plan?.city || '',
+    cities: tripData?.cities || plan?.cities || [],
+  }
+}
+
 export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   const activeLang = getActiveLang(lang)
   const isArabic = isArabicLang(activeLang)
+
+  const normalizedPlan = normalizePlan(plan)
+  const normalizedTripData = normalizeTripData(tripData, normalizedPlan)
 
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -319,16 +384,29 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
     compress: true,
   })
 
+  arabicFontLoaded = false
+
   if (isArabic) {
     const fontBase64 = await loadArabicFontAsBase64()
-    doc.addFileToVFS(ARABIC_FONT_FILE, fontBase64)
-    doc.addFont(ARABIC_FONT_FILE, ARABIC_FONT_NAME, 'normal')
-    doc.setFont(ARABIC_FONT_NAME, 'normal')
+
+    if (fontBase64) {
+      try {
+        doc.addFileToVFS(ARABIC_FONT_FILE, fontBase64)
+        doc.addFont(ARABIC_FONT_FILE, ARABIC_FONT_NAME, 'normal')
+        doc.setFont(ARABIC_FONT_NAME, 'normal')
+        arabicFontLoaded = true
+      } catch (error) {
+        console.warn('Arabic font could not be registered in jsPDF:', error)
+        arabicFontLoaded = false
+        doc.setFont('helvetica', 'normal')
+      }
+    } else {
+      doc.setFont('helvetica', 'normal')
+    }
 
     /*
-      مهم:
-      لا نستخدم doc.setR2L(true) هنا.
-      لأنه مع processArabic ممكن يعكس العربي مرتين ويطلع مثل: فاوش بدل شواف.
+      لا نستخدم doc.setR2L(true)
+      لأنه أحيانًا يعكس العربي مع processArabic ويطلع النص مقلوب.
     */
   }
 
@@ -343,9 +421,9 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   const textX = isArabic ? rightX : leftX
   const align = isArabic ? 'right' : 'left'
 
-  const itinerary = plan?.itinerary || plan?.days || []
-  const selectedCities = getTripCities(tripData, plan)
-  const cityDisplay = getCityDisplay(tripData, plan, activeLang)
+  const itinerary = normalizedPlan?.itinerary || []
+  const selectedCities = getTripCities(normalizedTripData, normalizedPlan)
+  const cityDisplay = getCityDisplay(normalizedTripData, normalizedPlan, activeLang)
 
   let y = margin
 
@@ -357,7 +435,7 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   doc.setLineWidth(0.8)
   doc.roundedRect(margin, y, contentWidth, 38, 5, 5, 'S')
 
-  // Logo in PDF header
+  // Logo
   const logoBoxSize = 24
   const logoBoxX = isArabic ? leftX + 6 : rightX - logoBoxSize - 6
   const logoBoxY = y + 7
@@ -415,7 +493,7 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   doc.setLineWidth(0.45)
   doc.roundedRect(margin, y, contentWidth, 46, 4, 4, 'FD')
 
-  drawText(doc, isArabic ? 'ملخص الرحلة' : 'Trip Summary', textX - (isArabic ? 4 : 0), y + 10, {
+  drawText(doc, isArabic ? 'ملخص الرحلة' : 'Trip Summary', textX, y + 10, {
     lang: activeLang,
     align,
     fontSize: 13,
@@ -433,8 +511,8 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   }
 
   const dateText =
-    tripData?.startDate || tripData?.endDate
-      ? `${tripData?.startDate || ''} - ${tripData?.endDate || ''}`
+    normalizedTripData?.startDate || normalizedTripData?.endDate
+      ? `${normalizedTripData?.startDate || ''} - ${normalizedTripData?.endDate || ''}`
       : ''
 
   const summaryPadding = 6
@@ -462,10 +540,9 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
 
   drawText(
     doc,
-    `${labels.people}: ${tripData?.numberOfPeople || ''}    ${labels.budget}: ${getBudgetLabel(
-      tripData?.budget,
-      activeLang
-    )}`,
+    `${labels.people}: ${normalizedTripData?.numberOfPeople || ''}    ${
+      labels.budget
+    }: ${getBudgetLabel(normalizedTripData?.budget, activeLang)}`,
     summaryTextX,
     y + 40,
     {
@@ -480,9 +557,29 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
 
   y += 56
 
+  if (!Array.isArray(itinerary) || itinerary.length === 0) {
+    drawText(
+      doc,
+      isArabic ? 'لا توجد بيانات رحلة محفوظة للتصدير.' : 'No itinerary data available to export.',
+      textX,
+      y + 8,
+      {
+        lang: activeLang,
+        align,
+        fontSize: 12,
+        color: BRAND.muted,
+        maxWidth: contentWidth,
+      }
+    )
+  }
+
   itinerary.forEach((day, dayIndex) => {
     const dayCity =
-      day?.city || selectedCities[dayIndex] || selectedCities[0] || tripData?.city || ''
+      day?.city ||
+      selectedCities[dayIndex] ||
+      selectedCities[0] ||
+      normalizedTripData?.city ||
+      ''
 
     const dayCityLabel = getCityLabel(dayCity, activeLang)
     const dayTheme = isArabic ? day?.theme_ar || day?.theme : day?.theme

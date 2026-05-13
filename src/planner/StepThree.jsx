@@ -488,6 +488,7 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
         numberOfPeople: tripData.numberOfPeople,
         accommodation: 'Not specified',
         tripType: 'Leisure',
+        lang,
       }
 
       const { data: fnData, error: fnError } = await supabase.functions.invoke(
