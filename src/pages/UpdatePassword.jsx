@@ -8,7 +8,7 @@ export default function UpdatePassword() {
   const navigate = useNavigate()
 
   const isArabic = lang === 'ar'
-  const logoSrc = '/shawaf-logo.png'
+  const logoSrc = '/brand/shawaf-logo.png'
 
   const text = {
     title: isArabic ? 'تحديث كلمة المرور' : 'Update Password',

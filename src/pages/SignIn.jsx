@@ -10,7 +10,7 @@ export default function SignIn() {
   const navigate = useNavigate()
 
   const isArabic = lang === 'ar'
-  const logoSrc = '/shawaf-logo.png'
+  const logoSrc = '/brand/shawaf-logo.png'
 
   const text = {
     subtitle: isArabic

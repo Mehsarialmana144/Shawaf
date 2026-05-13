@@ -6,7 +6,7 @@ import { useLang } from '../context/LanguageContext'
 export default function ResetPassword() {
   const { lang } = useLang()
   const isArabic = lang === 'ar'
-  const logoSrc = '/shawaf-logo.png'
+  const logoSrc = '/brand/shawaf-logo.png'
 
   const text = {
     title: isArabic ? 'إعادة تعيين كلمة المرور' : 'Reset Password',
