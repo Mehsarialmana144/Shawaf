@@ -28,6 +28,33 @@ const CITIES = [
   'KAEC',
 ]
 
+const CITY_LABELS_AR = {
+  Riyadh: 'الرياض',
+  Jeddah: 'جدة',
+  Mecca: 'مكة',
+  Medina: 'المدينة المنورة',
+  Dammam: 'الدمام',
+  'Al-Khobar': 'الخبر',
+  Dhahran: 'الظهران',
+  'Al-Ahsa': 'الأحساء',
+  'Al-Ula': 'العلا',
+  NEOM: 'نيوم',
+  Abha: 'أبها',
+  Taif: 'الطائف',
+  Yanbu: 'ينبع',
+  Tabuk: 'تبوك',
+  Hail: 'حائل',
+  Najran: 'نجران',
+  Jizan: 'جازان',
+  Diriyah: 'الدرعية',
+  Buraidah: 'بريدة',
+  Jubail: 'الجبيل',
+  'Al-Baha': 'الباحة',
+  Sakaka: 'سكاكا',
+  'Hafar Al-Batin': 'حفر الباطن',
+  KAEC: 'مدينة الملك عبدالله الاقتصادية',
+}
+
 const TRIP_TYPES = [
   { key: 'cultural', emoji: '🏛️' },
   { key: 'adventure', emoji: '⛰️' },
@@ -36,6 +63,11 @@ const TRIP_TYPES = [
   { key: 'business', emoji: '💼' },
   { key: 'family', emoji: '👨‍👩‍👧' },
 ]
+
+function getCityLabel(city, lang) {
+  if (!city) return ''
+  return lang === 'ar' ? CITY_LABELS_AR[city] || city : city
+}
 
 function daysBetween(start, end) {
   if (!start || !end) return 0
@@ -46,21 +78,76 @@ function daysBetween(start, end) {
 export default function StepOne({ data, onChange, onNext }) {
   const { t, lang } = useLang()
   const isArabic = lang === 'ar'
+
+  const selectedCities = data.cities?.length
+    ? data.cities
+    : data.city
+    ? [data.city]
+    : []
+
   const days = daysBetween(data.startDate, data.endDate)
 
+  const text = {
+    chooseCities: isArabic ? 'اختر مدينة أو أكثر' : 'Choose one or more cities',
+    selectedCities: isArabic ? 'المدن المختارة' : 'Selected cities',
+    multiCityHint: isArabic
+      ? 'يمكنك اختيار أكثر من مدينة، وسيتم ترتيب الرحلة حسب ترتيب اختيارك.'
+      : 'You can choose multiple cities. The trip will follow the order you select.',
+    removeCity: isArabic ? 'حذف المدينة' : 'Remove city',
+    cityRequired: isArabic
+      ? 'الرجاء اختيار مدينة واحدة على الأقل'
+      : 'Please select at least one destination city',
+    datesRequired: isArabic
+      ? 'الرجاء اختيار تاريخ البداية والنهاية'
+      : 'Please select start and end dates',
+    tripTypeRequired: isArabic
+      ? 'الرجاء اختيار نوع الرحلة'
+      : 'Please select a trip type',
+    daysLessThanCities: isArabic
+      ? 'عدد الأيام يجب أن يكون مساويًا أو أكثر من عدد المدن المختارة.'
+      : 'The number of days should be at least the number of selected cities.',
+  }
+
+  const toggleCity = (city) => {
+    const exists = selectedCities.includes(city)
+
+    const updatedCities = exists
+      ? selectedCities.filter((item) => item !== city)
+      : [...selectedCities, city]
+
+    onChange({
+      cities: updatedCities,
+      city: updatedCities[0] || '',
+    })
+  }
+
+  const removeCity = (city) => {
+    const updatedCities = selectedCities.filter((item) => item !== city)
+
+    onChange({
+      cities: updatedCities,
+      city: updatedCities[0] || '',
+    })
+  }
+
   const handleNext = () => {
-    if (!data.city) {
-      alert(isArabic ? 'الرجاء اختيار مدينة الوجهة' : 'Please select a destination city')
+    if (!selectedCities.length) {
+      alert(text.cityRequired)
       return
     }
 
     if (!data.startDate || !data.endDate) {
-      alert(isArabic ? 'الرجاء اختيار تاريخ البداية والنهاية' : 'Please select start and end dates')
+      alert(text.datesRequired)
+      return
+    }
+
+    if (days > 0 && selectedCities.length > days) {
+      alert(text.daysLessThanCities)
       return
     }
 
     if (!data.tripType) {
-      alert(isArabic ? 'الرجاء اختيار نوع الرحلة' : 'Please select a trip type')
+      alert(text.tripTypeRequired)
       return
     }
 
@@ -82,37 +169,69 @@ export default function StepOne({ data, onChange, onNext }) {
         </p>
       </div>
 
-      {/* Destination City */}
+      {/* Destination Cities */}
       <div className="mb-5">
         <label className="flex items-center gap-2 text-sm font-semibold text-[#333333] mb-2">
           <span className="text-[#006A4E]">📍</span>
-          <span dir="auto">{t('destinationCity')}</span>
+          <span dir="auto">{text.chooseCities}</span>
         </label>
 
-        <div className="relative">
-          <select
-            className="input-field appearance-none pe-10 ps-4 text-sm sm:text-base min-h-[52px]"
-            value={data.city}
-            onChange={(e) => onChange({ city: e.target.value })}
-            dir={isArabic ? 'rtl' : 'ltr'}
-          >
-            <option value="">{t('searchCity')}</option>
-            {CITIES.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
+        <p className="text-xs text-stone-400 mb-3 leading-relaxed" dir="auto">
+          {text.multiCityHint}
+        </p>
 
-          <svg
-            className="absolute end-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400 pointer-events-none"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+          {CITIES.map((city) => {
+            const selected = selectedCities.includes(city)
+
+            return (
+              <button
+                key={city}
+                type="button"
+                onClick={() => toggleCity(city)}
+                className={`min-w-0 rounded-xl border-2 px-3 py-3 text-sm font-medium transition-all text-center ${
+                  selected
+                    ? 'border-[#006A4E] bg-[#E6F2EE] text-[#006A4E]'
+                    : 'border-stone-200 bg-white text-stone-700 hover:border-[#D4AF37] hover:bg-[#FBF6E3]'
+                }`}
+                dir="auto"
+              >
+                {getCityLabel(city, lang)}
+              </button>
+            )
+          })}
         </div>
+
+        {selectedCities.length > 0 && (
+          <div className="mt-4 bg-[#F5F5F0] border border-[#DDD8C8] rounded-2xl p-3">
+            <div className="text-xs font-semibold text-stone-500 mb-2" dir="auto">
+              {text.selectedCities}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {selectedCities.map((city, index) => (
+                <span
+                  key={city}
+                  className="inline-flex items-center gap-2 bg-white border border-[#D4AF37]/40 text-[#006A4E] rounded-full px-3 py-1.5 text-xs font-medium"
+                  dir="auto"
+                >
+                  <span>
+                    {index + 1}. {getCityLabel(city, lang)}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => removeCity(city)}
+                    className="text-stone-400 hover:text-red-500"
+                    aria-label={text.removeCity}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Dates */}
@@ -147,7 +266,6 @@ export default function StepOne({ data, onChange, onNext }) {
         </div>
       </div>
 
-      {/* Day count badge */}
       {days > 0 && (
         <div
           className="mb-5 bg-[#E6F2EE] border border-[#D4AF37]/40 rounded-xl px-4 py-2.5 text-sm text-[#006A4E] font-medium leading-relaxed"
