@@ -4,6 +4,8 @@ const ARABIC_FONT_PATH = '/fonts/NotoNaskhArabic-Regular.ttf'
 const ARABIC_FONT_FILE = 'NotoNaskhArabic-Regular.ttf'
 const ARABIC_FONT_NAME = 'NotoNaskhArabic'
 
+const LOGO_PATH = '/shawaf-logo.png'
+
 const BRAND = {
   green: [0, 106, 78],
   greenDark: [0, 77, 57],
@@ -64,6 +66,7 @@ const BUDGET_LABELS_AR = {
 }
 
 let cachedArabicFontBase64 = null
+let cachedLogoDataUrl = null
 
 function getActiveLang(lang) {
   return (
@@ -189,6 +192,42 @@ async function loadArabicFontAsBase64() {
   return cachedArabicFontBase64
 }
 
+async function loadImageAsDataUrl(path) {
+  const response = await fetch(path)
+
+  if (!response.ok) {
+    throw new Error(`Image not found at ${path}`)
+  }
+
+  const blob = await response.blob()
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onloadend = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+async function loadLogoDataUrl() {
+  if (cachedLogoDataUrl) return cachedLogoDataUrl
+
+  try {
+    cachedLogoDataUrl = await loadImageAsDataUrl(LOGO_PATH)
+    return cachedLogoDataUrl
+  } catch (error) {
+    console.warn('Shawaf logo could not be loaded for PDF:', error)
+    return null
+  }
+}
+
+function getImageFormat(dataUrl) {
+  if (String(dataUrl).includes('image/jpeg')) return 'JPEG'
+  if (String(dataUrl).includes('image/jpg')) return 'JPEG'
+  return 'PNG'
+}
+
 function prepareText(doc, value, lang) {
   const text = cleanText(value)
 
@@ -220,19 +259,23 @@ function drawText(doc, text, x, y, options = {}) {
     lineHeight = 5,
   } = options
 
+  const rawText = cleanText(text)
+
+  if (!rawText) return y
+
   setPdfFont(doc, lang, weight)
   doc.setFontSize(fontSize)
   doc.setTextColor(...color)
 
-  const prepared = prepareText(doc, text, lang)
-
   if (maxWidth) {
-    const lines = doc.splitTextToSize(prepared, maxWidth)
-    doc.text(lines, x, y, { align })
-    return y + lines.length * lineHeight
+    const rawLines = doc.splitTextToSize(rawText, maxWidth)
+    const preparedLines = rawLines.map((line) => prepareText(doc, line, lang))
+
+    doc.text(preparedLines, x, y, { align })
+    return y + preparedLines.length * lineHeight
   }
 
-  doc.text(prepared, x, y, { align })
+  doc.text(prepareText(doc, rawText, lang), x, y, { align })
   return y + lineHeight
 }
 
@@ -245,8 +288,8 @@ function addPageIfNeeded(doc, y, neededHeight, pageHeight, margin) {
 
 function addFooter(doc, pageNumber, totalPages, pageWidth, pageHeight, lang) {
   const footer = isArabicLang(lang)
-    ? `شواف | مخطط رحلات بالذكاء الاصطناعي | متوافق مع رؤية 2030 | صفحة ${pageNumber} من ${totalPages}`
-    : `Shawaf | AI Travel Planner | Aligned with Vision 2030 | Page ${pageNumber} of ${totalPages}`
+    ? `شواف | مخطط رحلات بالذكاء الاصطناعي | صفحة ${pageNumber} من ${totalPages}`
+    : `Shawaf | AI Travel Planner | Page ${pageNumber} of ${totalPages}`
 
   drawText(doc, footer, pageWidth / 2, pageHeight - 8, {
     lang,
@@ -256,11 +299,12 @@ function addFooter(doc, pageNumber, totalPages, pageWidth, pageHeight, lang) {
   })
 }
 
-function estimateCardHeight(description, category) {
+function estimateCardHeight(description, category, lang) {
   const descriptionLength = cleanText(description).length
-  const descriptionLines = Math.max(1, Math.ceil(descriptionLength / 75))
+  const charsPerLine = isArabicLang(lang) ? 45 : 75
+  const descriptionLines = Math.max(1, Math.ceil(descriptionLength / charsPerLine))
 
-  return Math.max(28, 18 + descriptionLines * 5.5 + (category ? 5 : 0))
+  return Math.max(30, 20 + descriptionLines * 5.5 + (category ? 5 : 0))
 }
 
 export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
@@ -281,10 +325,14 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
     doc.addFont(ARABIC_FONT_FILE, ARABIC_FONT_NAME, 'normal')
     doc.setFont(ARABIC_FONT_NAME, 'normal')
 
-    if (typeof doc.setR2L === 'function') {
-      doc.setR2L(true)
-    }
+    /*
+      مهم:
+      لا نستخدم doc.setR2L(true) هنا.
+      لأنه مع processArabic ممكن يعكس العربي مرتين ويطلع مثل: فاوش بدل شواف.
+    */
   }
+
+  const logoDataUrl = await loadLogoDataUrl()
 
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
@@ -303,17 +351,40 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
 
   // Header
   doc.setFillColor(...BRAND.green)
-  doc.roundedRect(margin, y, contentWidth, 34, 5, 5, 'F')
+  doc.roundedRect(margin, y, contentWidth, 38, 5, 5, 'F')
 
   doc.setDrawColor(...BRAND.gold)
   doc.setLineWidth(0.8)
-  doc.roundedRect(margin, y, contentWidth, 34, 5, 5, 'S')
+  doc.roundedRect(margin, y, contentWidth, 38, 5, 5, 'S')
+
+  // Logo in PDF header
+  const logoBoxSize = 24
+  const logoBoxX = isArabic ? leftX + 6 : rightX - logoBoxSize - 6
+  const logoBoxY = y + 7
+
+  doc.setFillColor(...BRAND.white)
+  doc.roundedRect(logoBoxX, logoBoxY, logoBoxSize, logoBoxSize, 4, 4, 'F')
+
+  doc.setDrawColor(...BRAND.gold)
+  doc.setLineWidth(0.3)
+  doc.roundedRect(logoBoxX, logoBoxY, logoBoxSize, logoBoxSize, 4, 4, 'S')
+
+  if (logoDataUrl) {
+    doc.addImage(
+      logoDataUrl,
+      getImageFormat(logoDataUrl),
+      logoBoxX + 2,
+      logoBoxY + 2,
+      logoBoxSize - 4,
+      logoBoxSize - 4
+    )
+  }
 
   drawText(
     doc,
     isArabic ? 'شواف' : 'Shawaf',
     isArabic ? rightX - 7 : leftX + 7,
-    y + 13,
+    y + 15,
     {
       lang: activeLang,
       align,
@@ -327,7 +398,7 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
     doc,
     isArabic ? 'خطة رحلة مدعومة بالذكاء الاصطناعي' : 'AI-Powered Travel Plan',
     isArabic ? rightX - 7 : leftX + 7,
-    y + 25,
+    y + 28,
     {
       lang: activeLang,
       align,
@@ -336,14 +407,15 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
     }
   )
 
-  y += 44
+  y += 48
 
   // Summary
   doc.setFillColor(...BRAND.greenSoft)
   doc.setDrawColor(...BRAND.gold)
-  doc.roundedRect(margin, y, contentWidth, 38, 4, 4, 'FD')
+  doc.setLineWidth(0.45)
+  doc.roundedRect(margin, y, contentWidth, 46, 4, 4, 'FD')
 
-  drawText(doc, isArabic ? 'ملخص الرحلة' : 'Trip Summary', textX, y + 9, {
+  drawText(doc, isArabic ? 'ملخص الرحلة' : 'Trip Summary', textX - (isArabic ? 4 : 0), y + 10, {
     lang: activeLang,
     align,
     fontSize: 13,
@@ -365,46 +437,48 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
       ? `${tripData?.startDate || ''} - ${tripData?.endDate || ''}`
       : ''
 
-  const col1X = isArabic ? rightX - 4 : leftX + 4
-  const col2X = isArabic ? pageWidth / 2 - 4 : pageWidth / 2 + 4
+  const summaryPadding = 6
+  const summaryLeftX = margin + summaryPadding
+  const summaryRightX = rightX - summaryPadding
+  const summaryTextX = isArabic ? summaryRightX : summaryLeftX
 
-  drawText(doc, `${labels.destination}: ${cityDisplay}`, col1X, y + 19, {
+  drawText(doc, `${labels.destination}: ${cityDisplay}`, summaryTextX, y + 21, {
     lang: activeLang,
     align,
     fontSize: 9.5,
     color: BRAND.charcoal,
-    maxWidth: contentWidth / 2 - 8,
+    maxWidth: contentWidth - 12,
+    lineHeight: 5,
   })
 
-  drawText(doc, `${labels.dates}: ${dateText}`, col2X, y + 19, {
+  drawText(doc, `${labels.dates}: ${dateText}`, summaryTextX, y + 31, {
     lang: activeLang,
     align,
     fontSize: 9.5,
     color: BRAND.charcoal,
-    maxWidth: contentWidth / 2 - 8,
-  })
-
-  drawText(doc, `${labels.people}: ${tripData?.numberOfPeople || ''}`, col1X, y + 31, {
-    lang: activeLang,
-    align,
-    fontSize: 9.5,
-    color: BRAND.charcoal,
+    maxWidth: contentWidth - 12,
+    lineHeight: 5,
   })
 
   drawText(
     doc,
-    `${labels.budget}: ${getBudgetLabel(tripData?.budget, activeLang)}`,
-    col2X,
-    y + 31,
+    `${labels.people}: ${tripData?.numberOfPeople || ''}    ${labels.budget}: ${getBudgetLabel(
+      tripData?.budget,
+      activeLang
+    )}`,
+    summaryTextX,
+    y + 40,
     {
       lang: activeLang,
       align,
       fontSize: 9.5,
       color: BRAND.charcoal,
+      maxWidth: contentWidth - 12,
+      lineHeight: 5,
     }
   )
 
-  y += 48
+  y += 56
 
   itinerary.forEach((day, dayIndex) => {
     const dayCity =
@@ -417,7 +491,7 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
       dayCityLabel ? ` (${dayCityLabel})` : ''
     }${dayTheme ? ` — ${dayTheme}` : ''}`
 
-    y = addPageIfNeeded(doc, y, 20, pageHeight, margin)
+    y = addPageIfNeeded(doc, y, 22, pageHeight, margin)
 
     doc.setFillColor(...BRAND.green)
     doc.roundedRect(margin, y, contentWidth, 12, 3, 3, 'F')
@@ -428,6 +502,8 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
       fontSize: 11,
       color: BRAND.white,
       weight: 'bold',
+      maxWidth: contentWidth - 10,
+      lineHeight: 5,
     })
 
     y += 17
@@ -438,12 +514,17 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
       const stationCategory = getCategoryLabel(station?.category, activeLang)
       const time = station?.time || ''
 
-      const cardHeight = estimateCardHeight(stationDescription, stationCategory)
+      const cardHeight = estimateCardHeight(
+        stationDescription,
+        stationCategory,
+        activeLang
+      )
 
       y = addPageIfNeeded(doc, y, cardHeight + 6, pageHeight, margin)
 
       doc.setFillColor(...BRAND.offWhite)
       doc.setDrawColor(...BRAND.border)
+      doc.setLineWidth(0.45)
       doc.roundedRect(margin, y, contentWidth, cardHeight, 3, 3, 'FD')
 
       const cardLeftX = margin + 5
@@ -452,7 +533,7 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
 
       const stationTitle = `${stationIndex + 1}. ${stationName}`
 
-      const titleBottomY = drawText(doc, stationTitle, cardTextX, y + 7, {
+      const titleBottomY = drawText(doc, stationTitle, cardTextX, y + 8, {
         lang: activeLang,
         align,
         fontSize: 10.5,
@@ -463,18 +544,12 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
       })
 
       if (time) {
-        const previousR2L = isArabic && typeof doc.setR2L === 'function'
-
-        if (previousR2L) doc.setR2L(false)
-
-        drawText(doc, time, isArabic ? cardLeftX : cardRightX, y + 7, {
+        drawText(doc, time, isArabic ? cardLeftX : cardRightX, y + 8, {
           lang: 'en',
           align: isArabic ? 'left' : 'right',
           fontSize: 9,
           color: BRAND.green,
         })
-
-        if (previousR2L) doc.setR2L(true)
       }
 
       let innerY = titleBottomY + 1
@@ -485,6 +560,8 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
           align,
           fontSize: 8.5,
           color: BRAND.muted,
+          maxWidth: contentWidth - 10,
+          lineHeight: 5,
         })
 
         innerY += 5
