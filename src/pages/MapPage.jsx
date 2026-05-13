@@ -58,6 +58,10 @@ const CITY_LABELS_AR = {
   KAEC: 'مدينة الملك عبدالله الاقتصادية',
 }
 
+const AR_CITY_TO_EN = Object.fromEntries(
+  Object.entries(CITY_LABELS_AR).map(([en, ar]) => [ar, en])
+)
+
 const CATEGORY_COLORS = {
   Landmark: '#006A4E',
   Museum: '#D4AF37',
@@ -97,13 +101,46 @@ const LEGEND = [
   { type: 'Restaurant', color: '#A17E20' },
 ]
 
+const FALLBACK_OFFSETS = [
+  [0.012, 0.01],
+  [-0.01, 0.014],
+  [0.016, -0.012],
+  [-0.014, -0.008],
+  [0.006, 0.02],
+  [-0.018, 0.006],
+  [0.022, -0.004],
+  [-0.006, -0.02],
+  [0.028, 0.018],
+  [-0.024, -0.018],
+]
+
 function isInsideSaudi(lat, lng) {
   return lat >= 16 && lat <= 33 && lng >= 34 && lng <= 56
 }
 
+function getCityKey(city) {
+  if (!city) return ''
+
+  const clean = String(city).trim()
+
+  if (CITY_COORDS[clean]) return clean
+  if (AR_CITY_TO_EN[clean]) return AR_CITY_TO_EN[clean]
+
+  const firstPart = clean
+    .split(/[→←]/)
+    .map((item) => item.trim())
+    .filter(Boolean)[0]
+
+  if (CITY_COORDS[firstPart]) return firstPart
+  if (AR_CITY_TO_EN[firstPart]) return AR_CITY_TO_EN[firstPart]
+
+  return clean
+}
+
 function getCityLabel(city, lang) {
   if (!city) return ''
-  return lang === 'ar' ? CITY_LABELS_AR[city] || city : city
+  const key = getCityKey(city)
+  return lang === 'ar' ? CITY_LABELS_AR[key] || city : key || city
 }
 
 function getCategoryLabel(category, lang) {
@@ -151,23 +188,56 @@ function getStationDescription(station, lang = 'en') {
 }
 
 function getStationLat(station) {
-  const value = station?.lat ?? station?.latitude
+  const value =
+    station?.lat ??
+    station?.latitude ??
+    station?.location?.lat ??
+    station?.coordinates?.lat
+
   const number = Number(value)
   return Number.isFinite(number) ? number : null
 }
 
 function getStationLng(station) {
-  const value = station?.lng ?? station?.longitude
+  const value =
+    station?.lng ??
+    station?.longitude ??
+    station?.location?.lng ??
+    station?.coordinates?.lng
+
   const number = Number(value)
   return Number.isFinite(number) ? number : null
 }
 
-function hasCoordinates(station) {
+function hasRealCoordinates(station) {
   const lat = getStationLat(station)
   const lng = getStationLng(station)
 
   if (lat === null || lng === null) return false
   return isInsideSaudi(lat, lng)
+}
+
+function getFallbackPosition(station) {
+  const cityKey = getCityKey(station.dayCity || station.city)
+  const center = CITY_COORDS[cityKey] || CITY_COORDS.Riyadh
+  const offsetIndex =
+    ((Number(station.dayNum) || 1) * 3 + (Number(station.stationNum) || 1)) %
+    FALLBACK_OFFSETS.length
+
+  const [latOffset, lngOffset] = FALLBACK_OFFSETS[offsetIndex]
+
+  return [center[0] + latOffset, center[1] + lngOffset]
+}
+
+function getMarkerPosition(station) {
+  const lat = getStationLat(station)
+  const lng = getStationLng(station)
+
+  if (lat !== null && lng !== null && isInsideSaudi(lat, lng)) {
+    return [lat, lng]
+  }
+
+  return getFallbackPosition(station)
 }
 
 function buildGoogleMapsUrl(station) {
@@ -178,19 +248,21 @@ function buildGoogleMapsUrl(station) {
     return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
   }
 
-  const name = encodeURIComponent(
+  const name =
     station?.name ||
-      station?.place_name ||
-      station?.place ||
-      station?.title ||
-      'Attraction'
-  )
+    station?.place_name ||
+    station?.place ||
+    station?.title ||
+    'Attraction'
 
-  return `https://www.google.com/maps/search/?api=1&query=${name}`
+  const city = station?.dayCity || station?.city || ''
+  const q = encodeURIComponent(`${name}, ${city}, Saudi Arabia`)
+
+  return `https://www.google.com/maps/search/?api=1&query=${q}`
 }
 
-function createNumberIcon(number, category) {
-  const color = CATEGORY_COLORS[category] || '#006A4E'
+function createNumberIcon(number, category, estimated = false) {
+  const color = estimated ? '#78716C' : CATEGORY_COLORS[category] || '#006A4E'
 
   return L.divIcon({
     html: `
@@ -207,6 +279,7 @@ function createNumberIcon(number, category) {
         color:white;
         font-weight:bold;
         font-size:13px;
+        opacity:${estimated ? '0.85' : '1'};
       ">
         ${number}
       </div>
@@ -224,12 +297,7 @@ function FitMapToMarkers({ stations, city }) {
     setTimeout(() => {
       map.invalidateSize()
 
-      const validPositions = stations
-        .map((station) => [getStationLat(station), getStationLng(station)])
-        .filter(
-          ([lat, lng]) =>
-            lat !== null && lng !== null && isInsideSaudi(lat, lng)
-        )
+      const validPositions = stations.map(getMarkerPosition)
 
       if (validPositions.length > 0) {
         const bounds = L.latLngBounds(validPositions)
@@ -239,10 +307,11 @@ function FitMapToMarkers({ stations, city }) {
           maxZoom: 14,
         })
       } else {
-        const center = CITY_COORDS[city] || CITY_COORDS.Riyadh
+        const cityKey = getCityKey(city)
+        const center = CITY_COORDS[cityKey] || CITY_COORDS.Riyadh
         map.setView(center, 11)
       }
-    }, 200)
+    }, 250)
   }, [map, stations, city])
 
   return null
@@ -260,13 +329,13 @@ export default function MapPage() {
 
   const text = {
     mapped: isArabic ? 'معالم على الخريطة' : 'mapped',
-    withoutCoordinates: isArabic ? 'بدون إحداثيات' : 'without coordinates',
+    estimated: isArabic ? 'نقاط تقديرية' : 'estimated points',
     daySingular: isArabic ? 'يوم' : 'day',
     dayPlural: isArabic ? 'أيام' : 'days',
     openInGoogleMaps: isArabic ? 'فتح في خرائط Google' : 'Open in Google Maps',
-    missingCoordinates: isArabic
-      ? 'إحداثيات مفقودة أو غير صحيحة'
-      : 'Missing or invalid coordinates',
+    estimatedPoint: isArabic
+      ? 'هذه نقطة تقديرية لأن النشاط لا يحتوي على إحداثيات دقيقة.'
+      : 'Estimated point because this activity has no exact coordinates.',
     mapProvider: isArabic
       ? 'Leaflet / OpenStreetMap · تفتح خرائط Google خارجيًا'
       : 'Leaflet / OpenStreetMap · Google Maps opens externally',
@@ -304,7 +373,10 @@ export default function MapPage() {
         .join(isArabic ? ' ← ' : ' → ')
     : getCityLabel(tripData?.city || plan?.city || 'Riyadh', lang)
 
-  const primaryCity = selectedCities[0] || tripData?.city || plan?.city || 'Riyadh'
+  const primaryCity = getCityKey(
+    selectedCities[0] || tripData?.city || plan?.city || 'Riyadh'
+  )
+
   const center = CITY_COORDS[primaryCity] || CITY_COORDS.Riyadh
 
   const allStations = useMemo(() => {
@@ -329,15 +401,8 @@ export default function MapPage() {
       )
   }, [itinerary, selectedDay, selectedCities, primaryCity, lang])
 
-  const mappedStations = allStations.filter(hasCoordinates)
-
-  const missingCoordinateStations = allStations.filter((station) => {
-    const lat = getStationLat(station)
-    const lng = getStationLng(station)
-
-    if (lat === null || lng === null) return true
-    return !isInsideSaudi(lat, lng)
-  })
+  const mappedStations = allStations
+  const estimatedStations = allStations.filter((station) => !hasRealCoordinates(station))
 
   if (!plan) {
     return (
@@ -345,7 +410,10 @@ export default function MapPage() {
         <div className="card p-6 sm:p-8 w-full max-w-md text-center">
           <div className="text-6xl mb-4">🗺️</div>
 
-          <h2 className="text-xl sm:text-2xl font-bold text-[#333333] mb-2" dir="auto">
+          <h2
+            className="text-xl sm:text-2xl font-bold text-[#333333] mb-2"
+            dir="auto"
+          >
             {t('noTripData')}
           </h2>
 
@@ -364,7 +432,6 @@ export default function MapPage() {
     <div className="w-full bg-[#F5F5F0] overflow-hidden">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-5 lg:gap-6 min-h-[calc(100vh-130px)]">
-          {/* Sidebar */}
           <aside className="bg-white border border-[#DDD8C8] rounded-2xl overflow-hidden lg:max-h-[calc(100vh-150px)] lg:overflow-y-auto">
             <div className="p-4 space-y-4">
               <div>
@@ -379,12 +446,15 @@ export default function MapPage() {
 
                 <p className="text-xs text-stone-400 mt-1" dir="auto">
                   {mappedStations.length} {text.mapped} ·{' '}
-                  {missingCoordinateStations.length} {text.withoutCoordinates}
+                  {estimatedStations.length} {text.estimated}
                 </p>
               </div>
 
               <div className="card p-4">
-                <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3" dir="auto">
+                <h3
+                  className="text-xs font-semibold text-stone-500 uppercase mb-3"
+                  dir="auto"
+                >
                   {t('filterByDay')}
                 </h3>
 
@@ -427,7 +497,10 @@ export default function MapPage() {
               </div>
 
               <div className="card p-4">
-                <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3" dir="auto">
+                <h3
+                  className="text-xs font-semibold text-stone-500 uppercase mb-3"
+                  dir="auto"
+                >
                   {t('legend')}
                 </h3>
 
@@ -447,17 +520,27 @@ export default function MapPage() {
                       </span>
                     </div>
                   ))}
+
+                  <div className="flex items-center gap-2 text-xs text-stone-600 min-w-0">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0 bg-stone-500" />
+                    <span dir="auto" className="truncate">
+                      {text.estimated}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               <div className="card p-4">
-                <h3 className="text-xs font-semibold text-stone-500 uppercase mb-3" dir="auto">
+                <h3
+                  className="text-xs font-semibold text-stone-500 uppercase mb-3"
+                  dir="auto"
+                >
                   {allStations.length} {t('attractions')}
                 </h3>
 
                 <div className="space-y-3 max-h-[360px] lg:max-h-none overflow-y-auto pe-1">
                   {allStations.map((station, index) => {
-                    const hasCoords = hasCoordinates(station)
+                    const estimated = !hasRealCoordinates(station)
                     const dayCityLabel = getCityLabel(station.dayCity, lang)
 
                     return (
@@ -467,9 +550,9 @@ export default function MapPage() {
                       >
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
-                            hasCoords
-                              ? 'bg-[#E6F2EE] text-[#006A4E] border border-[#D4AF37]/35'
-                              : 'bg-stone-100 text-stone-400'
+                            estimated
+                              ? 'bg-stone-100 text-stone-500'
+                              : 'bg-[#E6F2EE] text-[#006A4E] border border-[#D4AF37]/35'
                           }`}
                         >
                           {index + 1}
@@ -483,33 +566,42 @@ export default function MapPage() {
                             {station.displayName}
                           </div>
 
-                          <div className="text-xs text-stone-400 mt-0.5" dir="auto">
+                          <div
+                            className="text-xs text-stone-400 mt-0.5"
+                            dir="auto"
+                          >
                             {t('day')} {station.dayNum}
                             {dayCityLabel ? ` (${dayCityLabel})` : ''}
                             {station.time ? ` · ${station.time}` : ''}
                           </div>
 
                           {station.displayCategory && (
-                            <div className="text-xs text-stone-400 mt-0.5" dir="auto">
+                            <div
+                              className="text-xs text-stone-400 mt-0.5"
+                              dir="auto"
+                            >
                               {station.displayCategory}
                             </div>
                           )}
 
-                          {hasCoords ? (
-                            <a
-                              href={buildGoogleMapsUrl(station)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-[#006A4E] hover:text-[#004D39] mt-1 inline-block"
+                          {estimated && (
+                            <div
+                              className="text-xs text-stone-400 mt-1"
                               dir="auto"
                             >
-                              {text.openInGoogleMaps}
-                            </a>
-                          ) : (
-                            <div className="text-xs text-red-400 mt-1" dir="auto">
-                              {text.missingCoordinates}
+                              {text.estimatedPoint}
                             </div>
                           )}
+
+                          <a
+                            href={buildGoogleMapsUrl(station)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-[#006A4E] hover:text-[#004D39] mt-1 inline-block"
+                            dir="auto"
+                          >
+                            {text.openInGoogleMaps}
+                          </a>
                         </div>
                       </div>
                     )
@@ -519,7 +611,6 @@ export default function MapPage() {
             </div>
           </aside>
 
-          {/* Map Area */}
           <section className="bg-white border border-[#DDD8C8] rounded-2xl overflow-hidden min-w-0 flex flex-col min-h-[520px]">
             <div className="bg-white border-b border-[#DDD8C8] px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="inline-flex items-center gap-1.5 bg-[#006A4E] text-white px-3 py-1.5 rounded-lg text-sm font-medium w-fit">
@@ -551,23 +642,33 @@ export default function MapPage() {
                 <FitMapToMarkers stations={mappedStations} city={primaryCity} />
 
                 {mappedStations.map((station, index) => {
-                  const lat = getStationLat(station)
-                  const lng = getStationLng(station)
+                  const [lat, lng] = getMarkerPosition(station)
+                  const estimated = !hasRealCoordinates(station)
                   const dayCityLabel = getCityLabel(station.dayCity, lang)
 
                   return (
                     <Marker
                       key={`${station.dayNum}-${index}-${station.displayName}`}
                       position={[lat, lng]}
-                      icon={createNumberIcon(index + 1, station.category)}
+                      icon={createNumberIcon(
+                        index + 1,
+                        station.category,
+                        estimated
+                      )}
                     >
                       <Popup>
-                        <div className="min-w-[200px]" dir={isArabic ? 'rtl' : 'ltr'}>
+                        <div
+                          className="min-w-[200px]"
+                          dir={isArabic ? 'rtl' : 'ltr'}
+                        >
                           <div className="font-semibold text-sm mb-1" dir="auto">
                             {station.displayName}
                           </div>
 
-                          <div className="text-xs text-stone-500 mb-1" dir="auto">
+                          <div
+                            className="text-xs text-stone-500 mb-1"
+                            dir="auto"
+                          >
                             {t('day')} {station.dayNum}
                             {dayCityLabel ? ` (${dayCityLabel})` : ''}
                           </div>
@@ -579,12 +680,27 @@ export default function MapPage() {
                           )}
 
                           {station.displayCategory && (
-                            <div className="text-xs text-stone-500 mb-1" dir="auto">
+                            <div
+                              className="text-xs text-stone-500 mb-1"
+                              dir="auto"
+                            >
                               {station.displayCategory}
                             </div>
                           )}
 
-                          <div className="text-xs text-stone-600 leading-relaxed" dir="auto">
+                          {estimated && (
+                            <div
+                              className="text-xs text-stone-400 mb-1"
+                              dir="auto"
+                            >
+                              {text.estimatedPoint}
+                            </div>
+                          )}
+
+                          <div
+                            className="text-xs text-stone-600 leading-relaxed"
+                            dir="auto"
+                          >
                             {station.displayDescription}
                           </div>
 
