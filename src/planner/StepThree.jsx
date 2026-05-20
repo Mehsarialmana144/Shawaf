@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
 import { exportItineraryPdf } from '../utils/exportItineraryPdf'
+import * as itineraryDisplay from '../utils/itineraryDisplay'
 
 const CITY_LABELS_AR = {
   Riyadh: 'الرياض',
@@ -52,52 +53,19 @@ function daysBetween(start, end) {
 }
 
 function getCityLabel(city, lang) {
-  if (!city) return ''
-  return lang === 'ar' ? CITY_LABELS_AR[city] || city : city
+  return itineraryDisplay.getCityLabel(city, lang)
 }
 
 function getCategoryLabel(category, lang) {
-  if (!category) return ''
-  return lang === 'ar' ? CATEGORY_LABELS_AR[category] || category : category
+  return itineraryDisplay.getCategoryLabel(category, lang)
 }
 
 function getStationName(station, lang = 'en') {
-  if (lang === 'ar') {
-    return (
-      station?.name_ar ||
-      station?.arabic_name ||
-      station?.place_name_ar ||
-      station?.title_ar ||
-      station?.name ||
-      station?.place_name ||
-      station?.place ||
-      station?.title ||
-      'معلم'
-    )
-  }
-
-  return (
-    station?.name ||
-    station?.place_name ||
-    station?.place ||
-    station?.title ||
-    'Attraction'
-  )
+  return itineraryDisplay.getStationName(station, lang)
 }
 
 function getStationDescription(station, lang = 'en') {
-  if (lang === 'ar') {
-    return (
-      station?.description_ar ||
-      station?.arabic_description ||
-      station?.desc_ar ||
-      station?.description ||
-      station?.desc ||
-      ''
-    )
-  }
-
-  return station?.description || station?.desc || ''
+  return itineraryDisplay.getStationDescription(station, lang)
 }
 
 function getStationLat(station) {
@@ -130,7 +98,7 @@ function normalize(value) {
 }
 
 function getStationsFromDay(day) {
-  return day?.stations || day?.activities || []
+  return itineraryDisplay.getStationsFromDay(day)
 }
 
 function attractionToStation(attraction, oldStation, index) {
@@ -139,10 +107,12 @@ function attractionToStation(attraction, oldStation, index) {
     id: attraction.id,
     place_name: attraction.name,
     name: attraction.name,
+    name_en: attraction.name || null,
     name_ar: attraction.name_ar || null,
     address: `${attraction.name}, ${attraction.city}, Saudi Arabia`,
     time: oldStation?.time || '',
     description: attraction.description || oldStation?.description || '',
+    description_en: attraction.description || oldStation?.description_en || '',
     description_ar:
       attraction.description_ar ||
       oldStation?.description_ar ||
@@ -168,7 +138,7 @@ function attractionToStation(attraction, oldStation, index) {
 
 export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
   const { t, lang } = useLang()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
 
   const isArabic = lang === 'ar'
@@ -247,6 +217,13 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
     ? selectedCities.map((city) => getCityLabel(city, lang)).join(isArabic ? ' ← ' : ' → ')
     : getCityLabel(tripData.city, lang)
 
+  const travelerName =
+    profile?.full_name ||
+    profile?.email?.split('@')[0] ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    ''
+
   const handleDownloadPDF = async () => {
     try {
       setError('')
@@ -256,6 +233,7 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
           ...tripData,
           city: cityDisplay,
           cities: selectedCities,
+          travelerName,
         },
         plan: localPlan,
         lang,
@@ -478,7 +456,6 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
         travelWith: tripData.travelWith || 'General',
         interests: tripData.interests || [],
         tripStyle: tripData.activityLevel,
-        hasCar: false,
         preferredTime: 'No Preference',
         notes: `${tripData.notes || ''} Regenerate only day ${
           dayIndex + 1
@@ -539,6 +516,17 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
     setError('')
 
     try {
+      const savedPlan = {
+        ...localPlan,
+        city: localPlan?.city || tripData.city,
+        cities: selectedCities,
+        startDate: tripData.startDate,
+        endDate: tripData.endDate,
+        numberOfPeople: tripData.numberOfPeople,
+        budget: tripData.budget,
+        travelerName,
+      }
+
       const { data: insertedTrip, error: dbError } = await supabase
         .from('trips')
         .insert({
@@ -549,10 +537,8 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
           travel_with: tripData.travelWith || 'General',
           interests: tripData.interests || [],
           trip_style: tripData.activityLevel,
-          has_car: false,
-          preferred_time: 'No Preference',
           notes: tripData.notes || '',
-          ai_plan: localPlan,
+          ai_plan: savedPlan,
         })
         .select('id')
         .single()
@@ -605,7 +591,7 @@ export default function StepThree({ tripData, plan, onBack, onRegenerate }) {
         {itinerary.map((day, di) => {
           const dayCity = day?.city || selectedCities[di] || selectedCities[0] || tripData.city
           const dayCityLabel = getCityLabel(dayCity, lang)
-          const dayTheme = lang === 'ar' ? day.theme_ar || day.theme : day.theme
+          const dayTheme = itineraryDisplay.getDayTheme(day, lang)
 
           return (
             <div key={di} className="card p-4 sm:p-6 mb-4 overflow-hidden">

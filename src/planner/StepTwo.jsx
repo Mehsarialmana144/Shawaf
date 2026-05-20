@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import { useLang } from '../context/LanguageContext'
 import SelectionCard from '../components/SelectionCard'
 
@@ -202,7 +203,6 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
         travelWith: data.travelWith || 'General',
         interests: data.interests || [],
         tripStyle: data.activityLevel,
-        hasCar: false,
         preferredTime: 'No Preference',
         notes: notesParts.join(' | '),
         numberOfPeople: data.numberOfPeople,
@@ -211,23 +211,15 @@ export default function StepTwo({ data, onChange, onBack, onGenerate }) {
         lang,
       }
 
-      const response = await fetch(
-        'https://esrnnyucvsmalldcxzns.supabase.co/functions/v1/Generate-trip',
+      const { data: result, error: fnError } = await supabase.functions.invoke(
+        'Generate-trip',
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify(payload),
+          body: payload,
         }
       )
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result?.error || text.requestFailed)
+      if (fnError) {
+        throw new Error(fnError.message || text.requestFailed)
       }
 
       if (!result) {

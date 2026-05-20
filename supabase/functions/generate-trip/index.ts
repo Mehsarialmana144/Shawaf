@@ -435,11 +435,13 @@ function attractionToStation(
     attraction_id: String(attraction.id),
     name: getAttractionName(attraction, language),
     place_name: getAttractionName(attraction, language),
+    name_en: attraction.name || attraction.name_ar || "",
     name_ar: attraction.name_ar || attraction.name || "",
     description:
       station?.description ||
       getAttractionDescription(attraction, language) ||
       "",
+    description_en: attraction.description || attraction.description_ar || "",
     description_ar:
       station?.description_ar ||
       attraction.description_ar ||
@@ -592,7 +594,6 @@ Deno.serve(async (req) => {
       travelWith,
       interests,
       tripStyle,
-      hasCar,
       preferredTime,
       notes,
       numberOfPeople,
@@ -728,7 +729,6 @@ Full trip details:
 - Preferred categories: ${preferredCategories.join(", ")}
 - Activity level: ${tripStyle || "Moderate"}
 - Target stations per day: ${stationsPerDay}
-- Has car: ${hasCar ? "Yes" : "No"}
 - Preferred activity time: ${preferredTime || "No preference"}
 - Trip type: ${tripType || "General"}
 - Accommodation: ${accommodation || "Flexible"}
@@ -746,7 +746,7 @@ Planning rules:
 4. If there are not enough attractions, return fewer stations instead of inventing new places.
 5. Prefer attractions matching the user's interests and preferred categories.
 6. Avoid repeating the same attraction within the batch.
-7. Keep descriptions short: one sentence only.
+7. Each station description should be place-specific and useful: write 2 concise sentences that mention what the traveler will see or do there and why it fits this day's plan.
 8. Do not invent exact ticket prices.
 9. Do not claim live availability.
 
@@ -758,7 +758,6 @@ Opening hours and time realism rules:
 5. Museums, heritage, historical, cultural, and landmark places are best in morning or afternoon.
 6. Shopping and entertainment can be afternoon or evening.
 7. Keep the daily order logical and comfortable for the selected activity level.
-8. If the user has no car, avoid an overly packed schedule.
 
 Return valid JSON only. No markdown. No explanation.
 Do not translate category values.
@@ -777,8 +776,8 @@ Return ONLY this JSON format:
           "order": 1,
           "attraction_id": "use_id_from_available_attractions",
           "time": "9:30 AM",
-          "description": "${isArabic ? "وصف عربي قصير مناسب للمستخدم." : "Short useful personalized description."}",
-          "description_ar": "وصف عربي قصير مناسب للمستخدم.",
+          "description": "${isArabic ? "وصف عربي واضح من جملتين يشرح تجربة المكان وسبب مناسبته لمسار اليوم." : "Two concise sentences explaining the place experience and why it fits the day."}",
+          "description_ar": "وصف عربي واضح من جملتين يشرح تجربة المكان وسبب مناسبته لمسار اليوم.",
           "duration": "1-2 hours"
         }
       ]

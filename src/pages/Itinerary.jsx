@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
 import { generatePDF } from '../utils/pdf'
+import * as itineraryDisplay from '../utils/itineraryDisplay'
 
 const CITY_LABELS_AR = {
   Riyadh: 'الرياض',
@@ -58,62 +59,27 @@ const STYLE_LABELS_AR = {
 }
 
 function getCityLabel(city, lang) {
-  if (!city) return ''
-  return lang === 'ar' ? CITY_LABELS_AR[city] || city : city
+  return itineraryDisplay.getCityLabel(city, lang)
 }
 
 function getCategoryLabel(category, lang) {
-  if (!category) return ''
-  return lang === 'ar' ? CATEGORY_LABELS_AR[category] || category : category
+  return itineraryDisplay.getCategoryLabel(category, lang)
 }
 
 function getBudgetLabel(budget, lang) {
-  if (!budget) return ''
-  return lang === 'ar' ? BUDGET_LABELS_AR[budget] || budget : budget
+  return itineraryDisplay.getBudgetLabel(budget, lang)
 }
 
 function getStyleLabel(style, lang) {
-  if (!style) return ''
-  return lang === 'ar' ? STYLE_LABELS_AR[style] || style : style
+  return itineraryDisplay.getStyleLabel(style, lang)
 }
 
 function getStationName(station, lang = 'en') {
-  if (lang === 'ar') {
-    return (
-      station?.name_ar ||
-      station?.arabic_name ||
-      station?.place_name_ar ||
-      station?.title_ar ||
-      station?.name ||
-      station?.place_name ||
-      station?.place ||
-      station?.title ||
-      'معلم'
-    )
-  }
-
-  return (
-    station?.name ||
-    station?.place_name ||
-    station?.place ||
-    station?.title ||
-    'Attraction'
-  )
+  return itineraryDisplay.getStationName(station, lang)
 }
 
 function getStationDescription(station, lang = 'en') {
-  if (lang === 'ar') {
-    return (
-      station?.description_ar ||
-      station?.arabic_description ||
-      station?.desc_ar ||
-      station?.description ||
-      station?.desc ||
-      ''
-    )
-  }
-
-  return station?.description || station?.desc || ''
+  return itineraryDisplay.getStationDescription(station, lang)
 }
 
 function getStationLat(station) {
@@ -142,21 +108,7 @@ function buildMapsUrl(station, city) {
 }
 
 function getCitiesDisplay(trip, lang = 'en') {
-  const plan = trip?.ai_plan
-
-  const cities = plan?.cities?.length
-    ? plan.cities
-    : Array.isArray(trip?.cities) && trip.cities.length
-    ? trip.cities
-    : trip?.city
-    ? [trip.city]
-    : []
-
-  if (!cities.length) return ''
-
-  return cities
-    .map((city) => getCityLabel(city, lang))
-    .join(lang === 'ar' ? ' ← ' : ' → ')
+  return itineraryDisplay.getCitiesDisplay(trip, lang)
 }
 
 function getDayCity(day, index, trip) {
@@ -165,8 +117,19 @@ function getDayCity(day, index, trip) {
   return day?.city || plan?.cities?.[index] || trip?.city || ''
 }
 
+function getTravelerName(profile, user, plan) {
+  return (
+    profile?.full_name ||
+    profile?.email?.split('@')[0] ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    plan?.travelerName ||
+    ''
+  )
+}
+
 export default function Itinerary() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { t, lang } = useLang()
   const navigate = useNavigate()
 
@@ -238,6 +201,7 @@ export default function Itinerary() {
   const plan = selected?.ai_plan
   const itinerary = plan?.itinerary || plan?.days || []
   const cityDisplay = getCitiesDisplay(selected, lang)
+  const travelerName = getTravelerName(profile, user, plan)
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 overflow-hidden">
@@ -302,7 +266,7 @@ export default function Itinerary() {
       {itinerary.map((day, di) => {
         const dayCity = getDayCity(day, di, selected)
         const dayCityLabel = getCityLabel(dayCity, lang)
-        const dayTheme = lang === 'ar' ? day.theme_ar || day.theme : day.theme
+        const dayTheme = itineraryDisplay.getDayTheme(day, lang)
 
         return (
           <div key={di} className="card p-4 sm:p-6 mb-4 overflow-hidden">
@@ -406,8 +370,13 @@ export default function Itinerary() {
           onClick={() =>
             generatePDF(
               {
+                ...selected,
                 city: cityDisplay,
-                numberOfPeople: '',
+                cities: plan?.cities || [],
+                startDate: plan?.startDate || plan?.start_date || '',
+                endDate: plan?.endDate || plan?.end_date || '',
+                numberOfPeople: plan?.numberOfPeople || plan?.number_of_people || '',
+                travelerName,
               },
               plan,
               itinerary

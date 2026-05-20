@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { useLang } from '../context/LanguageContext'
+import * as itineraryDisplay from '../utils/itineraryDisplay'
 
 const CITY_COORDS = {
   Riyadh: [24.7136, 46.6753],
@@ -138,53 +139,19 @@ function getCityKey(city) {
 }
 
 function getCityLabel(city, lang) {
-  if (!city) return ''
-  const key = getCityKey(city)
-  return lang === 'ar' ? CITY_LABELS_AR[key] || city : key || city
+  return itineraryDisplay.getCityLabel(city, lang)
 }
 
 function getCategoryLabel(category, lang) {
-  if (!category) return ''
-  return lang === 'ar' ? CATEGORY_LABELS_AR[category] || category : category
+  return itineraryDisplay.getCategoryLabel(category, lang)
 }
 
 function getStationName(station, lang = 'en') {
-  if (lang === 'ar') {
-    return (
-      station?.name_ar ||
-      station?.arabic_name ||
-      station?.place_name_ar ||
-      station?.title_ar ||
-      station?.name ||
-      station?.place_name ||
-      station?.place ||
-      station?.title ||
-      'معلم'
-    )
-  }
-
-  return (
-    station?.name ||
-    station?.place_name ||
-    station?.place ||
-    station?.title ||
-    'Attraction'
-  )
+  return itineraryDisplay.getStationName(station, lang)
 }
 
 function getStationDescription(station, lang = 'en') {
-  if (lang === 'ar') {
-    return (
-      station?.description_ar ||
-      station?.arabic_description ||
-      station?.desc_ar ||
-      station?.description ||
-      station?.desc ||
-      ''
-    )
-  }
-
-  return station?.description || station?.desc || ''
+  return itineraryDisplay.getStationDescription(station, lang)
 }
 
 function getStationLat(station) {

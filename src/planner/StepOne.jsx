@@ -75,9 +75,19 @@ function daysBetween(start, end) {
   return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)) + 1)
 }
 
+function getTodayInputValue() {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 export default function StepOne({ data, onChange, onNext }) {
   const { t, lang } = useLang()
   const isArabic = lang === 'ar'
+  const todayInputValue = getTodayInputValue()
 
   const selectedCities = data.cities?.length
     ? data.cities
@@ -104,6 +114,9 @@ export default function StepOne({ data, onChange, onNext }) {
     datesRequired: isArabic
       ? 'الرجاء اختيار تاريخ البداية والنهاية.'
       : 'Please select start and end dates.',
+    oldStartDate: isArabic
+      ? 'لا يمكن اختيار تاريخ بداية قديم.'
+      : 'Start date cannot be in the past.',
     tripTypeRequired: isArabic
       ? 'الرجاء اختيار نوع الرحلة.'
       : 'Please select a trip type.',
@@ -145,6 +158,11 @@ export default function StepOne({ data, onChange, onNext }) {
 
     if (!data.startDate || !data.endDate) {
       alert(text.datesRequired)
+      return
+    }
+
+    if (data.startDate < todayInputValue) {
+      alert(text.oldStartDate)
       return
     }
 
@@ -269,7 +287,14 @@ export default function StepOne({ data, onChange, onNext }) {
             className="block w-full h-14 min-h-0 max-w-full rounded-2xl border border-[#DDD8C8] bg-white px-4 py-0 text-base leading-none text-[#333333] shadow-none outline-none transition-colors focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/15"
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
             value={data.startDate}
-            onChange={(e) => onChange({ startDate: e.target.value })}
+            min={todayInputValue}
+            onChange={(e) =>
+              onChange({
+                startDate: e.target.value,
+                endDate:
+                  data.endDate && data.endDate < e.target.value ? '' : data.endDate,
+              })
+            }
           />
         </div>
 
@@ -284,7 +309,7 @@ export default function StepOne({ data, onChange, onNext }) {
             className="block w-full h-14 min-h-0 max-w-full rounded-2xl border border-[#DDD8C8] bg-white px-4 py-0 text-base leading-none text-[#333333] shadow-none outline-none transition-colors focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/15"
             style={{ WebkitAppearance: 'none', appearance: 'none' }}
             value={data.endDate}
-            min={data.startDate}
+            min={data.startDate || todayInputValue}
             onChange={(e) => onChange({ endDate: e.target.value })}
           />
         </div>

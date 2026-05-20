@@ -49,7 +49,15 @@ export default function Planner() {
             onChange={updateTripData}
             onBack={() => setStep(1)}
             onGenerate={(plan) => {
-              setGeneratedPlan(plan)
+              setGeneratedPlan({
+                ...(plan || {}),
+                city: plan?.city || tripData.city,
+                cities: plan?.cities || tripData.cities || [],
+                startDate: tripData.startDate,
+                endDate: tripData.endDate,
+                numberOfPeople: tripData.numberOfPeople,
+                budget: tripData.budget,
+              })
               setStep(3)
             }}
           />

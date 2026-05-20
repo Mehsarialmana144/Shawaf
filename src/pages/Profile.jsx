@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
+import { generatePDF } from '../utils/pdf'
+import * as itineraryDisplay from '../utils/itineraryDisplay'
 
 const CITY_LABELS_AR = {
   Riyadh: 'الرياض',
@@ -38,33 +40,26 @@ const BUDGET_LABELS_AR = {
 }
 
 function getCityLabel(city, lang) {
-  if (!city) return ''
-  return lang === 'ar' ? CITY_LABELS_AR[city] || city : city
+  return itineraryDisplay.getCityLabel(city, lang)
 }
 
 function getBudgetLabel(budget, lang) {
-  if (!budget) return ''
-  return lang === 'ar' ? BUDGET_LABELS_AR[budget] || budget : budget
+  return itineraryDisplay.getBudgetLabel(budget, lang)
 }
 
 function getTripCityDisplay(trip, lang) {
-  const cities =
-    trip?.ai_plan?.cities?.length
-      ? trip.ai_plan.cities
-      : Array.isArray(trip?.cities) && trip.cities.length
-      ? trip.cities
-      : trip?.city
-      ? String(trip.city)
-          .split('→')
-          .map((item) => item.trim())
-          .filter(Boolean)
-      : []
+  return itineraryDisplay.getCitiesDisplay(trip, lang) || trip?.city || ''
+}
 
-  if (!cities.length) return trip?.city || ''
-
-  return cities
-    .map((city) => getCityLabel(city, lang))
-    .join(lang === 'ar' ? ' ← ' : ' → ')
+function getTravelerName(profile, user, plan) {
+  return (
+    profile?.full_name ||
+    profile?.email?.split('@')[0] ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    plan?.travelerName ||
+    ''
+  )
 }
 
 function formatDate(dateValue, lang) {
@@ -97,6 +92,10 @@ export default function Profile() {
       ? 'فشل تحديث الملف الشخصي.'
       : 'Failed to update profile.',
     deleteFailed: isArabic ? 'فشل حذف الرحلة.' : 'Failed to delete trip.',
+    pdfFailed: isArabic ? 'فشل تحميل ملف PDF.' : 'Failed to download PDF.',
+    noPlan: isArabic ? 'لا توجد خطة محفوظة لهذه الرحلة.' : 'No saved plan for this trip.',
+    pdf: isArabic ? 'تحميل PDF' : 'PDF',
+    generatingPdf: isArabic ? 'جاري التحميل...' : 'Generating...',
     days: isArabic ? 'أيام' : 'days',
     day: isArabic ? 'يوم' : 'day',
     view: t('viewItinerary'),
@@ -107,6 +106,7 @@ export default function Profile() {
   const [trips, setTrips] = useState([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [pdfLoadingId, setPdfLoadingId] = useState(null)
   const [saveMsg, setSaveMsg] = useState('')
   const [error, setError] = useState('')
 
@@ -172,6 +172,44 @@ export default function Profile() {
     }
 
     setTrips((prev) => prev.filter((tr) => tr.id !== id))
+  }
+
+  const handleDownloadPdf = async (trip) => {
+    setError('')
+
+    if (!trip?.ai_plan) {
+      setError(text.noPlan)
+      return
+    }
+
+    const itinerary = trip.ai_plan?.itinerary || trip.ai_plan?.days || []
+    const cityDisplay = getTripCityDisplay(trip, lang)
+    const travelerName = getTravelerName(profile, user, trip.ai_plan)
+
+    setPdfLoadingId(trip.id)
+
+    try {
+      await generatePDF(
+        {
+          ...trip,
+          city: cityDisplay,
+          cities: trip.ai_plan?.cities || [],
+          startDate: trip.ai_plan?.startDate || trip.ai_plan?.start_date || '',
+          endDate: trip.ai_plan?.endDate || trip.ai_plan?.end_date || '',
+          numberOfPeople:
+            trip.ai_plan?.numberOfPeople || trip.ai_plan?.number_of_people || '',
+          travelerName,
+        },
+        trip.ai_plan,
+        itinerary,
+        lang
+      )
+    } catch (err) {
+      console.error('Saved trip PDF error:', err)
+      setError(err.message || text.pdfFailed)
+    } finally {
+      setPdfLoadingId(null)
+    }
   }
 
   const handleSignOut = async () => {
@@ -347,7 +385,7 @@ export default function Profile() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 flex-shrink-0">
+                      <div className="grid grid-cols-3 sm:flex sm:items-center gap-2 flex-shrink-0">
                         <button
                           onClick={() => {
                             sessionStorage.setItem(
@@ -366,6 +404,14 @@ export default function Profile() {
                           className="text-xs text-[#006A4E] hover:text-[#004D39] border border-[#D4AF37]/45 rounded-lg px-3 py-2 transition-colors hover:bg-[#FBF6E3]"
                         >
                           {text.view}
+                        </button>
+
+                        <button
+                          onClick={() => handleDownloadPdf(trip)}
+                          disabled={pdfLoadingId === trip.id}
+                          className="text-xs text-[#006A4E] hover:text-[#004D39] border border-[#D4AF37]/45 rounded-lg px-3 py-2 transition-colors hover:bg-[#FBF6E3] disabled:opacity-60"
+                        >
+                          {pdfLoadingId === trip.id ? text.generatingPdf : text.pdf}
                         </button>
 
                         <button

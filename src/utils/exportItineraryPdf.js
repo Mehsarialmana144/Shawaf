@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf'
+import * as itineraryDisplay from './itineraryDisplay'
 
 const PUBLIC_BASE_URL = import.meta.env.BASE_URL || '/'
 
@@ -6,7 +7,7 @@ const ARABIC_FONT_PATH = `${PUBLIC_BASE_URL}fonts/NotoNaskhArabic-Regular.ttf`
 const ARABIC_FONT_FILE = 'NotoNaskhArabic-Regular.ttf'
 const ARABIC_FONT_NAME = 'NotoNaskhArabic'
 
-const LOGO_PATH = `${PUBLIC_BASE_URL}shawaf-logo.png`
+const LOGO_PATH = `${PUBLIC_BASE_URL}brand/shawaf-logo.png`
 
 const BRAND = {
   green: [0, 106, 78],
@@ -63,8 +64,20 @@ const CATEGORY_LABELS_AR = {
 
 const BUDGET_LABELS_AR = {
   Budget: 'اقتصادي',
+  Moderate: 'متوسط',
   'Mid-Range': 'متوسط',
   Luxury: 'فاخر',
+}
+
+const KNOWN_AR_TO_EN = {
+  'استكشاف التاريخ والثقافة': 'History and Culture',
+  'استكشاف ثقافي في جدة': 'Cultural Discovery in Jeddah',
+  'استكشاف سريع': 'Quick Discovery',
+  'المتحف الوطني السعودي': 'National Museum of Saudi Arabia',
+  البلد: 'Al-Balad',
+  'واجهة جدة البحرية': 'Jeddah Waterfront',
+  'حي الطريف في الدرعية': 'At-Turaif District',
+  'بوليفارد رياض سيتي': 'Boulevard Riyadh City',
 }
 
 let cachedArabicFontBase64 = null
@@ -90,78 +103,119 @@ function cleanText(value) {
     .trim()
 }
 
+function hasArabicText(value) {
+  return /[\u0600-\u06FF]/.test(String(value || ''))
+}
+
+function isPresent(value) {
+  return value !== null && value !== undefined && cleanText(value) !== ''
+}
+
+function firstText(...values) {
+  const value = values.find((item) => isPresent(item))
+  return value === undefined ? '' : value
+}
+
+function translateKnownArabicText(value) {
+  const text = cleanText(value)
+  if (!text) return ''
+
+  if (KNOWN_AR_TO_EN[text]) return KNOWN_AR_TO_EN[text]
+
+  if (text.includes('المتحف الوطني السعودي')) {
+    return 'The National Museum of Saudi Arabia presents the history of the Arabian Peninsula in a clear cultural setting, making it a strong start to the day.'
+  }
+
+  if (text.includes('البلد')) {
+    return 'Al-Balad is a historic district with traditional architecture and lively heritage streets, making it a memorable cultural stop.'
+  }
+
+  return ''
+}
+
+function getEnglishTextOrFallback(values, fallback = '') {
+  const englishValue = values.find((value) => isPresent(value) && !hasArabicText(value))
+  if (englishValue) return englishValue
+
+  const translatedValue = values
+    .map((value) => translateKnownArabicText(value))
+    .find((value) => isPresent(value))
+
+  return translatedValue || fallback
+}
+
+function getTripDaysValue(tripData, plan) {
+  const candidates = [
+    tripData?.days,
+    tripData?.dayCount,
+    tripData?.totalDays,
+    plan?.dayCount,
+    plan?.totalDays,
+    plan?.tripDays,
+  ]
+
+  const value = candidates.find((item) => isPresent(item) && !Array.isArray(item))
+  return value || ''
+}
+
 function getCityLabel(city, lang) {
-  if (!city) return ''
-  return isArabicLang(lang) ? CITY_LABELS_AR[city] || city : city
+  return itineraryDisplay.getCityLabel(city, getActiveLang(lang))
 }
 
 function getCategoryLabel(category, lang) {
-  if (!category) return ''
-  return isArabicLang(lang) ? CATEGORY_LABELS_AR[category] || category : category
+  return itineraryDisplay.getCategoryLabel(category, getActiveLang(lang))
 }
 
 function getBudgetLabel(budget, lang) {
-  if (!budget) return ''
-  return isArabicLang(lang) ? BUDGET_LABELS_AR[budget] || budget : budget
+  return itineraryDisplay.getBudgetLabel(budget, getActiveLang(lang))
 }
 
 function getStationsFromDay(day) {
-  return day?.stations || day?.activities || []
+  return itineraryDisplay.getStationsFromDay(day)
 }
 
 function getStationName(station, lang) {
-  if (isArabicLang(lang)) {
-    return (
-      station?.name_ar ||
-      station?.place_name_ar ||
-      station?.arabic_name ||
-      station?.title_ar ||
-      station?.name ||
-      station?.place_name ||
-      station?.place ||
-      station?.title ||
-      'معلم'
-    )
-  }
-
-  return (
-    station?.name ||
-    station?.place_name ||
-    station?.place ||
-    station?.title ||
-    'Attraction'
-  )
+  return itineraryDisplay.getStationName(station, getActiveLang(lang))
 }
 
 function getStationDescription(station, lang) {
+  return itineraryDisplay.getStationDescription(station, getActiveLang(lang))
+}
+
+function getStationFallbackDescription(stationName, stationCategory, dayCity, lang) {
+  const place = cleanText(stationName)
+  const category = cleanText(stationCategory)
+  const city = cleanText(dayCity)
+
   if (isArabicLang(lang)) {
-    return (
-      station?.description_ar ||
-      station?.arabic_description ||
-      station?.desc_ar ||
-      station?.description ||
-      station?.desc ||
-      ''
-    )
+    if (place && city) {
+      return `${place} محطة مقترحة في ${city} تمنحك تجربة مناسبة داخل مسار اليوم، مع وقت كاف للاستكشاف والتقاط التفاصيل التي تميز المكان.`
+    }
+
+    if (place) {
+      return `${place} محطة مقترحة في جدولك، مناسبة للاستكشاف الهادئ وإضافة تجربة مميزة إلى رحلتك.`
+    }
+
+    return category
+      ? `محطة ${category} مناسبة ضمن جدولك، تضيف تنوعًا لطيفًا لتجربة الرحلة.`
+      : 'محطة مناسبة ضمن جدولك، تضيف تجربة لطيفة إلى مسار الرحلة.'
   }
 
-  return station?.description || station?.desc || ''
+  if (place && city) {
+    return `${place} is a recommended stop in ${city}, giving you enough time to explore the place and enjoy the details that make it worth visiting.`
+  }
+
+  if (place) {
+    return `${place} is a recommended stop in your itinerary, chosen to add a meaningful moment to your trip.`
+  }
+
+  return category
+    ? `A ${category.toLowerCase()} stop that adds variety and balance to your itinerary.`
+    : 'A recommended stop that adds a pleasant experience to your trip.'
 }
 
 function getTripCities(tripData, plan) {
-  if (Array.isArray(plan?.cities) && plan.cities.length) return plan.cities
-  if (Array.isArray(tripData?.cities) && tripData.cities.length) return tripData.cities
-
-  if (tripData?.city) {
-    return String(tripData.city)
-      .split(/[→←]/)
-      .map((item) => item.trim())
-      .filter(Boolean)
-  }
-
-  if (plan?.city) return [plan.city]
-
-  return []
+  return itineraryDisplay.getTripCities(tripData, plan)
 }
 
 function getCityDisplay(tripData, plan, lang) {
@@ -210,6 +264,13 @@ async function loadImageAsDataUrl(path) {
       return null
     }
 
+    const contentType = response.headers.get('content-type') || ''
+
+    if (!contentType.startsWith('image/')) {
+      console.warn(`Expected image but received ${contentType || 'unknown'} from: ${path}`)
+      return null
+    }
+
     const blob = await response.blob()
 
     return new Promise((resolve, reject) => {
@@ -241,7 +302,7 @@ function getImageFormat(dataUrl) {
 function prepareText(doc, value, lang) {
   const text = cleanText(value)
 
-  if (!isArabicLang(lang)) return text
+  if (!isArabicLang(lang) && !hasArabicText(text)) return text
 
   if (arabicFontLoaded && typeof doc.processArabic === 'function') {
     return doc.processArabic(text)
@@ -279,20 +340,55 @@ function drawText(doc, text, x, y, options = {}) {
 
   if (!rawText) return y
 
-  setPdfFont(doc, lang, weight)
+  const textHasArabic = hasArabicText(rawText)
+  const textLang = textHasArabic ? 'ar' : lang
+  const shouldMirrorArabicText = textHasArabic && !isArabicLang(lang)
+  const textAlign = shouldMirrorArabicText ? 'right' : align
+  const textX = shouldMirrorArabicText && maxWidth ? x + maxWidth : x
+
+  setPdfFont(doc, textLang, weight)
   doc.setFontSize(fontSize)
   doc.setTextColor(...color)
 
   if (maxWidth) {
     const rawLines = doc.splitTextToSize(rawText, maxWidth)
-    const preparedLines = rawLines.map((line) => prepareText(doc, line, lang))
+    const preparedLines = rawLines.map((line) => prepareText(doc, line, textLang))
 
-    doc.text(preparedLines, x, y, { align })
+    doc.text(preparedLines, textX, y, { align: textAlign })
     return y + preparedLines.length * lineHeight
   }
 
-  doc.text(prepareText(doc, rawText, lang), x, y, { align })
+  doc.text(prepareText(doc, rawText, textLang), textX, y, { align: textAlign })
   return y + lineHeight
+}
+
+function drawInfoTile(doc, { x, y, width, height, label, value, lang, isArabic }) {
+  const textX = isArabic ? x + width - 4 : x + 4
+  const align = isArabic ? 'right' : 'left'
+
+  doc.setFillColor(...BRAND.white)
+  doc.setDrawColor(...BRAND.border)
+  doc.setLineWidth(0.35)
+  doc.roundedRect(x, y, width, height, 3, 3, 'FD')
+
+  drawText(doc, label, textX, y + 5.5, {
+    lang,
+    align,
+    fontSize: 7.5,
+    color: BRAND.muted,
+    maxWidth: width - 8,
+    lineHeight: 4,
+  })
+
+  drawText(doc, value, textX, y + 12, {
+    lang,
+    align,
+    fontSize: 9.2,
+    color: BRAND.charcoal,
+    weight: 'bold',
+    maxWidth: width - 8,
+    lineHeight: 4.4,
+  })
 }
 
 function addPageIfNeeded(doc, y, neededHeight, pageHeight, margin) {
@@ -303,11 +399,41 @@ function addPageIfNeeded(doc, y, neededHeight, pageHeight, margin) {
 }
 
 function addFooter(doc, pageNumber, totalPages, pageWidth, pageHeight, lang) {
-  const footer = isArabicLang(lang)
-    ? `شواف | مخطط رحلات بالذكاء الاصطناعي | صفحة ${pageNumber} من ${totalPages}`
-    : `Shawaf | AI Travel Planner | Page ${pageNumber} of ${totalPages}`
+  const year = new Date().getFullYear()
+  const isArabic = isArabicLang(lang)
+  const footerY = pageHeight - 8
 
-  drawText(doc, footer, pageWidth / 2, pageHeight - 8, {
+  if (isArabic) {
+    const footerParts = [
+      { text: 'شواف', x: pageWidth / 2 + 72, lang },
+      { text: '|', x: pageWidth / 2 + 56, lang: 'en' },
+      { text: 'رؤية', x: pageWidth / 2 + 44, lang },
+      { text: '٢٠٣٠', x: pageWidth / 2 + 28, lang },
+      { text: '|', x: pageWidth / 2 + 13, lang: 'en' },
+      { text: `حقوق النشر محفوظة ${toArabicDigits(year)}`, x: pageWidth / 2 - 13, lang },
+      { text: '|', x: pageWidth / 2 - 49, lang: 'en' },
+      {
+        text: `صفحة ${toArabicDigits(pageNumber)} من ${toArabicDigits(totalPages)}`,
+        x: pageWidth / 2 - 69,
+        lang,
+      },
+    ]
+
+    footerParts.forEach((part) => {
+      drawText(doc, part.text, part.x, footerY, {
+        lang: part.lang,
+        align: 'center',
+        fontSize: 8,
+        color: [150, 145, 135],
+      })
+    })
+
+    return
+  }
+
+  const footer = `Shawaf | Saudi Vision 2030 | © ${year} All rights reserved | Page ${pageNumber} of ${totalPages}`
+
+  drawText(doc, footer, pageWidth / 2, footerY, {
     lang,
     align: 'center',
     fontSize: 8,
@@ -315,12 +441,18 @@ function addFooter(doc, pageNumber, totalPages, pageWidth, pageHeight, lang) {
   })
 }
 
-function estimateCardHeight(description, category, lang) {
+function estimateCardHeight(title, description, category, lang) {
+  const titleLength = cleanText(title).length
   const descriptionLength = cleanText(description).length
+  const titleCharsPerLine = isArabicLang(lang) ? 38 : 58
   const charsPerLine = isArabicLang(lang) ? 45 : 75
+  const titleLines = Math.max(1, Math.ceil(titleLength / titleCharsPerLine))
   const descriptionLines = Math.max(1, Math.ceil(descriptionLength / charsPerLine))
 
-  return Math.max(30, 20 + descriptionLines * 5.5 + (category ? 5 : 0))
+  return Math.max(
+    44,
+    29 + titleLines * 5 + descriptionLines * 5.5 + (category ? 6 : 0)
+  )
 }
 
 function normalizePlan(plan) {
@@ -343,30 +475,115 @@ function normalizeTripData(tripData, plan) {
   return {
     ...tripData,
     startDate:
-      tripData?.startDate ||
-      tripData?.start_date ||
-      tripData?.trip_start_date ||
-      plan?.startDate ||
-      plan?.start_date ||
-      '',
+      firstText(
+        tripData?.startDate,
+        tripData?.start_date,
+        tripData?.trip_start_date,
+        tripData?.ai_plan?.startDate,
+        tripData?.ai_plan?.start_date,
+        plan?.startDate,
+        plan?.start_date
+      ) || '',
     endDate:
-      tripData?.endDate ||
-      tripData?.end_date ||
-      tripData?.trip_end_date ||
-      plan?.endDate ||
-      plan?.end_date ||
-      '',
+      firstText(
+        tripData?.endDate,
+        tripData?.end_date,
+        tripData?.trip_end_date,
+        tripData?.ai_plan?.endDate,
+        tripData?.ai_plan?.end_date,
+        plan?.endDate,
+        plan?.end_date
+      ) || '',
     numberOfPeople:
-      tripData?.numberOfPeople ||
-      tripData?.number_of_people ||
-      tripData?.people ||
-      plan?.numberOfPeople ||
-      plan?.number_of_people ||
-      '',
-    budget: tripData?.budget || plan?.budget || '',
-    city: tripData?.city || plan?.city || '',
-    cities: tripData?.cities || plan?.cities || [],
+      firstText(
+        tripData?.numberOfPeople,
+        tripData?.number_of_people,
+        tripData?.people,
+        tripData?.ai_plan?.numberOfPeople,
+        tripData?.ai_plan?.number_of_people,
+        plan?.numberOfPeople,
+        plan?.number_of_people
+      ) || '',
+    days: getTripDaysValue(tripData, plan),
+    budget: firstText(tripData?.budget, tripData?.ai_plan?.budget, plan?.budget) || '',
+    city: firstText(tripData?.city, tripData?.ai_plan?.city, plan?.city) || '',
+    cities: tripData?.cities || tripData?.ai_plan?.cities || plan?.cities || [],
+    travelerName:
+      firstText(
+        tripData?.travelerName,
+        tripData?.full_name,
+        tripData?.fullName,
+        tripData?.profileName,
+        tripData?.profile?.full_name,
+        tripData?.user?.user_metadata?.full_name,
+        tripData?.ai_plan?.travelerName,
+        plan?.travelerName
+      ) || '',
   }
+}
+
+function parseDateOnly(value) {
+  if (!value) return null
+
+  const dateText = String(value).trim()
+  const match = dateText.match(/^(\d{4})-(\d{2})-(\d{2})/)
+
+  if (match) {
+    const [, year, month, day] = match
+    return new Date(Number(year), Number(month) - 1, Number(day))
+  }
+
+  const date = new Date(dateText)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+function formatPdfDate(value, lang) {
+  const date = parseDateOnly(value)
+
+  if (!date) return ''
+
+  return new Intl.DateTimeFormat(isArabicLang(lang) ? 'ar-SA-u-ca-gregory' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date)
+}
+
+function formatPdfNumber(value, lang) {
+  if (value === null || value === undefined || value === '') return ''
+
+  const number = Number(value)
+
+  if (!Number.isFinite(number)) return cleanText(value)
+
+  return new Intl.NumberFormat(isArabicLang(lang) ? 'ar-SA-u-nu-arab' : 'en-US').format(
+    number
+  )
+}
+
+function toArabicDigits(value) {
+  const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩']
+
+  return String(value).replace(/\d/g, (digit) => digits[Number(digit)])
+}
+
+function getDurationText(days, lang) {
+  const formattedDays = formatPdfNumber(days, lang)
+
+  if (!formattedDays) return ''
+
+  return isArabicLang(lang) ? `${formattedDays} أيام` : `${formattedDays} days`
+}
+
+function getDateRangeText(startDate, endDate, days, lang) {
+  const start = formatPdfDate(startDate, lang)
+  const end = formatPdfDate(endDate, lang)
+
+  if (start && end && start !== end) {
+    return isArabicLang(lang) ? `من ${start} إلى ${end}` : `${start} - ${end}`
+  }
+
+  return start || end || getDurationText(days, lang) || (isArabicLang(lang) ? 'غير محدد' : 'Not set')
 }
 
 export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
@@ -386,29 +603,25 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
 
   arabicFontLoaded = false
 
-  if (isArabic) {
-    const fontBase64 = await loadArabicFontAsBase64()
+  const fontBase64 = await loadArabicFontAsBase64()
 
-    if (fontBase64) {
-      try {
-        doc.addFileToVFS(ARABIC_FONT_FILE, fontBase64)
-        doc.addFont(ARABIC_FONT_FILE, ARABIC_FONT_NAME, 'normal')
-        doc.setFont(ARABIC_FONT_NAME, 'normal')
-        arabicFontLoaded = true
-      } catch (error) {
-        console.warn('Arabic font could not be registered in jsPDF:', error)
-        arabicFontLoaded = false
-        doc.setFont('helvetica', 'normal')
-      }
-    } else {
-      doc.setFont('helvetica', 'normal')
+  if (fontBase64) {
+    try {
+      doc.addFileToVFS(ARABIC_FONT_FILE, fontBase64)
+      doc.addFont(ARABIC_FONT_FILE, ARABIC_FONT_NAME, 'normal')
+      arabicFontLoaded = true
+    } catch (error) {
+      console.warn('Arabic font could not be registered in jsPDF:', error)
+      arabicFontLoaded = false
     }
-
-    /*
-      لا نستخدم doc.setR2L(true)
-      لأنه أحيانًا يعكس العربي مع processArabic ويطلع النص مقلوب.
-    */
   }
+
+  doc.setFont(isArabic && arabicFontLoaded ? ARABIC_FONT_NAME : 'helvetica', 'normal')
+
+  /*
+    لا نستخدم doc.setR2L(true)
+    لأنه أحيانًا يعكس العربي مع processArabic ويطلع النص مقلوب.
+  */
 
   const logoDataUrl = await loadLogoDataUrl()
 
@@ -418,27 +631,38 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   const contentWidth = pageWidth - margin * 2
   const leftX = margin
   const rightX = pageWidth - margin
-  const textX = isArabic ? rightX : leftX
+  const sectionPadding = 7
+  const contentLeftX = leftX + sectionPadding
+  const contentRightX = rightX - sectionPadding
+  const textX = isArabic ? contentRightX : contentLeftX
   const align = isArabic ? 'right' : 'left'
 
   const itinerary = normalizedPlan?.itinerary || []
   const selectedCities = getTripCities(normalizedTripData, normalizedPlan)
   const cityDisplay = getCityDisplay(normalizedTripData, normalizedPlan, activeLang)
+  const travelerName = cleanText(normalizedTripData?.travelerName)
+  const greetingText = travelerName
+    ? isArabic
+      ? `أهلًا بك يا ${travelerName}`
+      : `Welcome, ${travelerName}`
+    : isArabic
+    ? 'أهلًا بك في رحلتك مع شواف'
+    : 'Welcome to your Shawaf trip'
 
   let y = margin
 
   // Header
   doc.setFillColor(...BRAND.green)
-  doc.roundedRect(margin, y, contentWidth, 38, 5, 5, 'F')
+  doc.roundedRect(margin, y, contentWidth, 46, 6, 6, 'F')
 
   doc.setDrawColor(...BRAND.gold)
   doc.setLineWidth(0.8)
-  doc.roundedRect(margin, y, contentWidth, 38, 5, 5, 'S')
+  doc.roundedRect(margin, y, contentWidth, 46, 6, 6, 'S')
 
   // Logo
-  const logoBoxSize = 24
-  const logoBoxX = isArabic ? leftX + 6 : rightX - logoBoxSize - 6
-  const logoBoxY = y + 7
+  const logoBoxSize = 27
+  const logoBoxX = isArabic ? leftX + 11 : rightX - logoBoxSize - 11
+  const logoBoxY = y + 9
 
   doc.setFillColor(...BRAND.white)
   doc.roundedRect(logoBoxX, logoBoxY, logoBoxSize, logoBoxSize, 4, 4, 'F')
@@ -461,12 +685,12 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   drawText(
     doc,
     isArabic ? 'شواف' : 'Shawaf',
-    isArabic ? rightX - 7 : leftX + 7,
-    y + 15,
+    isArabic ? contentRightX + 1 : contentLeftX + 1,
+    y + 16,
     {
       lang: activeLang,
       align,
-      fontSize: 24,
+      fontSize: 25,
       color: BRAND.white,
       weight: 'bold',
     }
@@ -475,8 +699,8 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   drawText(
     doc,
     isArabic ? 'خطة رحلة مدعومة بالذكاء الاصطناعي' : 'AI-Powered Travel Plan',
-    isArabic ? rightX - 7 : leftX + 7,
-    y + 28,
+    isArabic ? contentRightX + 1 : contentLeftX + 1,
+    y + 30,
     {
       lang: activeLang,
       align,
@@ -485,13 +709,68 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
     }
   )
 
-  y += 48
+  drawText(
+    doc,
+    isArabic ? 'جدول جاهز للحفظ والاستخدام أثناء الرحلة' : 'A polished itinerary for your trip',
+    isArabic ? contentRightX + 1 : contentLeftX + 1,
+    y + 39,
+    {
+      lang: activeLang,
+      align,
+      fontSize: 8.5,
+      color: [230, 242, 238],
+    }
+  )
+
+  y += 56
+
+  doc.setFillColor(...BRAND.goldSoft)
+  doc.setDrawColor(...BRAND.gold)
+  doc.setLineWidth(0.35)
+  doc.roundedRect(margin, y - 5, contentWidth, 13, 6, 6, 'FD')
+
+  if (isArabic && travelerName && !hasArabicText(travelerName)) {
+    const greetingPrefix = 'أهلًا بك يا'
+    const greetingY = y + 3.4
+
+    drawText(doc, greetingPrefix, textX, greetingY, {
+      lang: activeLang,
+      align,
+      fontSize: 10.5,
+      color: BRAND.green,
+      weight: 'bold',
+      lineHeight: 6,
+    })
+
+    setPdfFont(doc, 'ar', 'normal')
+    doc.setFontSize(10.5)
+    const prefixWidth = doc.getTextWidth(prepareText(doc, greetingPrefix, 'ar'))
+
+    setPdfFont(doc, 'en', 'bold')
+    doc.setFontSize(10.5)
+    doc.setTextColor(...BRAND.green)
+    doc.text(travelerName, textX - prefixWidth - 2, greetingY, {
+      align: 'right',
+    })
+  } else {
+    drawText(doc, greetingText, textX, y + 3.4, {
+      lang: activeLang,
+      align,
+      fontSize: 10.5,
+      color: BRAND.green,
+      weight: 'bold',
+      maxWidth: contentWidth - sectionPadding * 2,
+      lineHeight: 6,
+    })
+  }
+
+  y += 18
 
   // Summary
   doc.setFillColor(...BRAND.greenSoft)
   doc.setDrawColor(...BRAND.gold)
   doc.setLineWidth(0.45)
-  doc.roundedRect(margin, y, contentWidth, 46, 4, 4, 'FD')
+  doc.roundedRect(margin, y, contentWidth, 70, 5, 5, 'FD')
 
   drawText(doc, isArabic ? 'ملخص الرحلة' : 'Trip Summary', textX, y + 10, {
     lang: activeLang,
@@ -504,58 +783,65 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
   const labels = {
     destination: isArabic ? 'الوجهة' : 'Destination',
     dates: isArabic ? 'التواريخ' : 'Dates',
+    duration: isArabic ? 'مدة الرحلة' : 'Trip Length',
     people: isArabic ? 'عدد الأشخاص' : 'People',
     budget: isArabic ? 'الميزانية' : 'Budget',
     day: isArabic ? 'اليوم' : 'Day',
     category: isArabic ? 'التصنيف' : 'Category',
+    placeDescription: isArabic ? 'وصف المكان' : 'Place Description',
   }
 
-  const dateText =
+  const dateText = getDateRangeText(
+    normalizedTripData?.startDate,
+    normalizedTripData?.endDate,
+    normalizedTripData?.days,
+    activeLang
+  )
+  const dateLabel =
     normalizedTripData?.startDate || normalizedTripData?.endDate
-      ? `${normalizedTripData?.startDate || ''} - ${normalizedTripData?.endDate || ''}`
-      : ''
+      ? labels.dates
+      : labels.duration
+  const peopleText =
+    formatPdfNumber(normalizedTripData?.numberOfPeople, activeLang) ||
+    (isArabic ? 'غير محدد' : 'Not set')
+  const budgetText =
+    getBudgetLabel(normalizedTripData?.budget, activeLang) ||
+    (isArabic ? 'غير محدد' : 'Not set')
 
   const summaryPadding = 6
   const summaryLeftX = margin + summaryPadding
   const summaryRightX = rightX - summaryPadding
-  const summaryTextX = isArabic ? summaryRightX : summaryLeftX
+  const tileGap = 4
+  const tileWidth = (contentWidth - summaryPadding * 2 - tileGap) / 2
+  const tileHeight = 20
+  const firstTileX = isArabic ? summaryRightX - tileWidth : summaryLeftX
+  const secondTileX = isArabic
+    ? summaryRightX - tileWidth * 2 - tileGap
+    : summaryLeftX + tileWidth + tileGap
 
-  drawText(doc, `${labels.destination}: ${cityDisplay}`, summaryTextX, y + 21, {
-    lang: activeLang,
-    align,
-    fontSize: 9.5,
-    color: BRAND.charcoal,
-    maxWidth: contentWidth - 12,
-    lineHeight: 5,
-  })
+  const summaryTiles = [
+    { label: labels.destination, value: cityDisplay || (isArabic ? 'غير محدد' : 'Not set') },
+    { label: dateLabel, value: dateText },
+    { label: labels.people, value: String(peopleText) },
+    { label: labels.budget, value: budgetText },
+  ]
 
-  drawText(doc, `${labels.dates}: ${dateText}`, summaryTextX, y + 31, {
-    lang: activeLang,
-    align,
-    fontSize: 9.5,
-    color: BRAND.charcoal,
-    maxWidth: contentWidth - 12,
-    lineHeight: 5,
-  })
-
-  drawText(
-    doc,
-    `${labels.people}: ${normalizedTripData?.numberOfPeople || ''}    ${
-      labels.budget
-    }: ${getBudgetLabel(normalizedTripData?.budget, activeLang)}`,
-    summaryTextX,
-    y + 40,
-    {
+  summaryTiles.forEach((item, index) => {
+    const col = index % 2
+    const row = Math.floor(index / 2)
+    drawInfoTile(doc, {
+      x: col === 0 ? firstTileX : secondTileX,
+      y: y + 17 + row * (tileHeight + 4),
+      width: tileWidth,
+      height: tileHeight,
+      label: item.label,
+      value: item.value,
       lang: activeLang,
-      align,
-      fontSize: 9.5,
-      color: BRAND.charcoal,
-      maxWidth: contentWidth - 12,
-      lineHeight: 5,
-    }
-  )
+      isArabic,
+    })
+  })
 
-  y += 56
+  y += 80
 
   if (!Array.isArray(itinerary) || itinerary.length === 0) {
     drawText(
@@ -568,7 +854,7 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
         align,
         fontSize: 12,
         color: BRAND.muted,
-        maxWidth: contentWidth,
+        maxWidth: contentWidth - sectionPadding * 2,
       }
     )
   }
@@ -582,69 +868,182 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
       ''
 
     const dayCityLabel = getCityLabel(dayCity, activeLang)
-    const dayTheme = isArabic ? day?.theme_ar || day?.theme : day?.theme
+    const dayTheme = cleanText(itineraryDisplay.getDayTheme(day, activeLang))
+    const dayNumberText = `${labels.day} ${formatPdfNumber(dayIndex + 1, activeLang)}`
+    const dayMeta = dayTheme || (isArabic ? 'برنامج اليوم' : 'Daily Plan')
 
-    const dayTitle = `${labels.day} ${dayIndex + 1}${
-      dayCityLabel ? ` (${dayCityLabel})` : ''
-    }${dayTheme ? ` — ${dayTheme}` : ''}`
+    y = addPageIfNeeded(doc, y, 27, pageHeight, margin)
 
-    y = addPageIfNeeded(doc, y, 22, pageHeight, margin)
+    const dayHeaderHeight = 17
+    const dayChipWidth = 34
+    const dayChipHeight = 9
+    const dayChipX = isArabic
+      ? contentRightX - dayChipWidth
+      : contentLeftX
+    const dayChipY = y + 4
+    const cityChipWidth = dayCityLabel
+      ? Math.min(44, Math.max(24, cleanText(dayCityLabel).length * 2.4 + 12))
+      : 0
+    const cityChipX = isArabic
+      ? dayChipX - cityChipWidth - 3
+      : dayChipX + dayChipWidth + 3
+    const dayMetaX = isArabic
+      ? (dayCityLabel ? cityChipX : dayChipX) - 5
+      : (dayCityLabel ? cityChipX + cityChipWidth : dayChipX + dayChipWidth) + 5
+    const dayMetaMaxWidth =
+      contentWidth - sectionPadding * 2 - dayChipWidth - (dayCityLabel ? cityChipWidth + 3 : 0) - 10
 
     doc.setFillColor(...BRAND.green)
-    doc.roundedRect(margin, y, contentWidth, 12, 3, 3, 'F')
+    doc.roundedRect(margin, y, contentWidth, dayHeaderHeight, 4, 4, 'F')
 
-    drawText(doc, dayTitle, isArabic ? rightX - 5 : leftX + 5, y + 8, {
+    doc.setDrawColor(...BRAND.gold)
+    doc.setLineWidth(0.35)
+    doc.roundedRect(margin, y, contentWidth, dayHeaderHeight, 4, 4, 'S')
+
+    doc.setFillColor(...BRAND.goldSoft)
+    doc.setDrawColor(...BRAND.gold)
+    doc.setLineWidth(0.25)
+    doc.roundedRect(dayChipX, dayChipY, dayChipWidth, dayChipHeight, 4, 4, 'FD')
+
+    drawText(doc, dayNumberText, dayChipX + dayChipWidth / 2, y + 10.2, {
+      lang: activeLang,
+      align: 'center',
+      fontSize: 8,
+      color: BRAND.greenDark,
+      weight: 'bold',
+    })
+
+    if (dayCityLabel) {
+      doc.setFillColor(...BRAND.white)
+      doc.setDrawColor(...BRAND.gold)
+      doc.setLineWidth(0.25)
+      doc.roundedRect(cityChipX, dayChipY, cityChipWidth, dayChipHeight, 4, 4, 'FD')
+
+      drawText(doc, dayCityLabel, cityChipX + cityChipWidth / 2, y + 10.2, {
+        lang: activeLang,
+        align: 'center',
+        fontSize: 8,
+        color: BRAND.greenDark,
+        weight: 'bold',
+      })
+    }
+
+    drawText(doc, dayMeta, dayMetaX, y + 10.5, {
       lang: activeLang,
       align,
       fontSize: 11,
       color: BRAND.white,
       weight: 'bold',
-      maxWidth: contentWidth - 10,
+      maxWidth: dayMetaMaxWidth,
       lineHeight: 5,
     })
 
-    y += 17
+    y += 23
 
     getStationsFromDay(day).forEach((station, stationIndex) => {
       const stationName = getStationName(station, activeLang)
-      const stationDescription = getStationDescription(station, activeLang)
       const stationCategory = getCategoryLabel(station?.category, activeLang)
+      const stationDescription =
+        getStationDescription(station, activeLang) ||
+        getStationFallbackDescription(
+          stationName,
+          stationCategory,
+          dayCityLabel,
+          activeLang
+        )
       const time = station?.time || ''
 
       const cardHeight = estimateCardHeight(
+        stationName,
         stationDescription,
         stationCategory,
         activeLang
       )
 
-      y = addPageIfNeeded(doc, y, cardHeight + 6, pageHeight, margin)
+      y = addPageIfNeeded(doc, y, cardHeight + 7, pageHeight, margin)
 
-      doc.setFillColor(...BRAND.offWhite)
+      doc.setFillColor(...BRAND.white)
       doc.setDrawColor(...BRAND.border)
       doc.setLineWidth(0.45)
-      doc.roundedRect(margin, y, contentWidth, cardHeight, 3, 3, 'FD')
+      doc.roundedRect(margin, y, contentWidth, cardHeight, 4, 4, 'FD')
 
-      const cardLeftX = margin + 5
-      const cardRightX = pageWidth - margin - 5
-      const cardTextX = isArabic ? cardRightX : cardLeftX
+      doc.setFillColor(...BRAND.greenSoft)
+      doc.roundedRect(
+        isArabic ? rightX - 3 : margin,
+        y,
+        3,
+        cardHeight,
+        2,
+        2,
+        'F'
+      )
 
-      const stationTitle = `${stationIndex + 1}. ${stationName}`
+      const cardLeftX = contentLeftX
+      const cardRightX = contentRightX
+      const numberBadgeSize = 8
+      const numberBadgeX = isArabic ? cardRightX - numberBadgeSize : cardLeftX
+      const numberBadgeY = y + 5
+      const bodyTextX = isArabic
+        ? numberBadgeX - 4
+        : numberBadgeX + numberBadgeSize + 4
+      const timeBoxWidth = 28
+      const timeBoxX = isArabic ? cardLeftX : cardRightX - timeBoxWidth
+      const titleMaxWidth = Math.max(
+        45,
+        isArabic
+          ? bodyTextX - (time ? timeBoxX + timeBoxWidth + 5 : cardLeftX)
+          : (time ? timeBoxX - 5 : cardRightX) - bodyTextX
+      )
+      const bodyMaxWidth = Math.max(
+        55,
+        isArabic ? bodyTextX - cardLeftX : cardRightX - bodyTextX
+      )
 
-      const titleBottomY = drawText(doc, stationTitle, cardTextX, y + 8, {
+      doc.setFillColor(...BRAND.green)
+      doc.roundedRect(
+        numberBadgeX,
+        numberBadgeY,
+        numberBadgeSize,
+        numberBadgeSize,
+        4,
+        4,
+        'F'
+      )
+
+      drawText(
+        doc,
+        formatPdfNumber(stationIndex + 1, activeLang),
+        numberBadgeX + numberBadgeSize / 2,
+        y + 10.7,
+        {
+          lang: activeLang,
+          align: 'center',
+          fontSize: 7,
+          color: BRAND.white,
+          weight: 'bold',
+        }
+      )
+
+      const titleBottomY = drawText(doc, stationName, bodyTextX, y + 8, {
         lang: activeLang,
         align,
         fontSize: 10.5,
         color: BRAND.charcoal,
-        weight: 'bold',
-        maxWidth: contentWidth - 42,
-        lineHeight: 5,
-      })
+          weight: 'bold',
+          maxWidth: titleMaxWidth,
+          lineHeight: 5,
+        })
 
       if (time) {
-        drawText(doc, time, isArabic ? cardLeftX : cardRightX, y + 8, {
+        doc.setFillColor(...BRAND.greenSoft)
+        doc.setDrawColor(...BRAND.gold)
+        doc.setLineWidth(0.25)
+        doc.roundedRect(timeBoxX, y + 5, timeBoxWidth, 8, 4, 4, 'FD')
+
+        drawText(doc, time, timeBoxX + timeBoxWidth / 2, y + 10.5, {
           lang: 'en',
-          align: isArabic ? 'left' : 'right',
-          fontSize: 9,
+          align: 'center',
+          fontSize: 8,
           color: BRAND.green,
         })
       }
@@ -652,25 +1051,45 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
       let innerY = titleBottomY + 1
 
       if (stationCategory) {
-        drawText(doc, `${labels.category}: ${stationCategory}`, cardTextX, innerY, {
+        doc.setFillColor(...BRAND.goldSoft)
+        doc.setDrawColor(...BRAND.gold)
+        doc.setLineWidth(0.25)
+
+        const tagWidth = Math.min(54, Math.max(24, cleanText(stationCategory).length * 2.2 + 14))
+        const tagX = isArabic ? bodyTextX - tagWidth : bodyTextX
+        doc.roundedRect(tagX, innerY - 3.8, tagWidth, 7, 3.5, 3.5, 'FD')
+
+        drawText(doc, stationCategory, isArabic ? tagX + tagWidth - 4 : tagX + 4, innerY + 1, {
           lang: activeLang,
           align,
-          fontSize: 8.5,
-          color: BRAND.muted,
-          maxWidth: contentWidth - 10,
+          fontSize: 7.6,
+          color: BRAND.greenDark,
+          maxWidth: tagWidth - 8,
           lineHeight: 5,
         })
 
-        innerY += 5
+        innerY += 7
       }
 
       if (stationDescription) {
-        drawText(doc, stationDescription, cardTextX, innerY, {
+        drawText(doc, labels.placeDescription, bodyTextX, innerY, {
+          lang: activeLang,
+          align,
+          fontSize: 7.3,
+          color: BRAND.muted,
+          weight: 'bold',
+          maxWidth: bodyMaxWidth,
+          lineHeight: 4,
+        })
+
+        innerY += 4.2
+
+        drawText(doc, stationDescription, bodyTextX, innerY, {
           lang: activeLang,
           align,
           fontSize: 8.8,
           color: [87, 83, 78],
-          maxWidth: contentWidth - 10,
+          maxWidth: bodyMaxWidth,
           lineHeight: 5,
         })
       }
@@ -680,6 +1099,50 @@ export async function exportItineraryPdf({ tripData, plan, lang = 'en' }) {
 
     y += 3
   })
+
+  if (Array.isArray(itinerary) && itinerary.length > 0) {
+    y = addPageIfNeeded(doc, y, 22, pageHeight, margin)
+
+    doc.setFillColor(...BRAND.goldSoft)
+    doc.setDrawColor(...BRAND.gold)
+    doc.setLineWidth(0.45)
+    doc.roundedRect(margin, y, contentWidth, 22, 5, 5, 'FD')
+
+    drawText(
+      doc,
+      isArabic ? 'رحلة سعيدة من شواف' : 'Have a Wonderful Trip with Shawaf',
+      textX,
+      y + 8,
+      {
+        lang: activeLang,
+        align,
+        fontSize: 11,
+        color: BRAND.green,
+        weight: 'bold',
+        maxWidth: contentWidth - sectionPadding * 2,
+        lineHeight: 5,
+      }
+    )
+
+    drawText(
+      doc,
+      isArabic
+        ? 'نتمنى لك أيامًا مليئة بالاكتشافات الجميلة، واللحظات التي تستحق أن تُحفظ.'
+        : 'May your days be full of beautiful discoveries and moments worth keeping.',
+      textX,
+      y + 16,
+      {
+        lang: activeLang,
+        align,
+        fontSize: 8.5,
+        color: [87, 83, 78],
+        maxWidth: contentWidth - sectionPadding * 2,
+        lineHeight: 4.5,
+      }
+    )
+
+    y += 28
+  }
 
   const pageCount = doc.internal.getNumberOfPages()
 
