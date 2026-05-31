@@ -26,6 +26,18 @@ function StatCard({ icon, value, label }) {
   )
 }
 
+function formatGiveawayDate(dateValue, lang) {
+  if (!dateValue) return '—'
+
+  return new Date(dateValue).toLocaleString(lang === 'ar' ? 'ar-SA' : 'en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export default function Admin() {
   const { lang } = useLang()
   const isArabic = lang === 'ar'
@@ -42,6 +54,27 @@ export default function Admin() {
     pendingReports: isArabic ? 'البلاغات المعلقة' : 'Pending Reports',
     monthlyTrips: isArabic ? 'الرحلات الشهرية' : 'Monthly Trips Overview',
     noData: isArabic ? 'لا توجد بيانات' : 'No Data',
+    giveawayDraw: isArabic ? 'سحب القيف أوي' : 'Giveaway Draw',
+    giveawayDrawDesc: isArabic
+      ? 'اختر فائزًا عشوائيًا من المشاركين المسجلين في صفحة القيف أوي.'
+      : 'Pick a random winner from the giveaway check-in entries.',
+    giveawayEntries: isArabic ? 'عدد المشاركين' : 'Entries',
+    pickWinner: isArabic ? 'اختيار الفائز' : 'Pick Winner',
+    pickingWinner: isArabic ? 'جاري الاختيار...' : 'Picking...',
+    winner: isArabic ? 'الفائز' : 'Winner',
+    winnerName: isArabic ? 'الاسم' : 'Name',
+    winnerEmail: isArabic ? 'الإيميل' : 'Email',
+    participants: isArabic ? 'المشاركون' : 'Participants',
+    participantName: isArabic ? 'الاسم' : 'Name',
+    participantEmail: isArabic ? 'الإيميل' : 'Email',
+    participantTicket: isArabic ? 'رقم التذكرة' : 'Ticket',
+    participantDate: isArabic ? 'وقت التسجيل' : 'Checked In',
+    noEntries: isArabic
+      ? 'لا يوجد مشاركون في السحب حتى الآن.'
+      : 'No giveaway entries yet.',
+    giveawayLoadFailed: isArabic
+      ? 'فشل تحميل بيانات القيف أوي.'
+      : 'Failed to load giveaway entries.',
     quickActions: isArabic ? 'إجراءات سريعة' : 'Quick Actions',
     manageAttractions: isArabic ? 'إدارة المعالم' : 'Manage Attractions',
     manageAttractionsDesc: isArabic
@@ -66,6 +99,10 @@ export default function Admin() {
   })
 
   const [chartData, setChartData] = useState([])
+  const [giveawayEntries, setGiveawayEntries] = useState([])
+  const [giveawayWinner, setGiveawayWinner] = useState(null)
+  const [giveawayError, setGiveawayError] = useState('')
+  const [pickingWinner, setPickingWinner] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -75,7 +112,16 @@ export default function Admin() {
   const loadStats = async () => {
     setLoading(true)
 
-    const [profilesRes, tripsRes, attractionsRes, reportsRes, tripsListRes] =
+    setGiveawayError('')
+
+    const [
+      profilesRes,
+      tripsRes,
+      attractionsRes,
+      reportsRes,
+      tripsListRes,
+      giveawayRes,
+    ] =
       await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }),
         supabase.from('trips').select('id', { count: 'exact', head: true }),
@@ -88,6 +134,10 @@ export default function Admin() {
           .from('trips')
           .select('created_at')
           .order('created_at', { ascending: true }),
+        supabase
+          .from('giveaway_entries')
+          .select('full_name, email, ticket_number, created_at')
+          .order('created_at', { ascending: false }),
       ])
 
     setStats({
@@ -114,8 +164,30 @@ export default function Admin() {
       trips,
     }))
 
+    if (giveawayRes.error) {
+      setGiveawayError(giveawayRes.error.message || text.giveawayLoadFailed)
+      setGiveawayEntries([])
+      setGiveawayWinner(null)
+    } else {
+      setGiveawayEntries(
+        (giveawayRes.data || []).filter((entry) => entry.full_name?.trim())
+      )
+    }
+
     setChartData(data.length ? data : [{ month: text.noData, trips: 0 }])
     setLoading(false)
+  }
+
+  const pickGiveawayWinner = () => {
+    if (!giveawayEntries.length || pickingWinner) return
+
+    setPickingWinner(true)
+
+    window.setTimeout(() => {
+      const index = Math.floor(Math.random() * giveawayEntries.length)
+      setGiveawayWinner(giveawayEntries[index])
+      setPickingWinner(false)
+    }, 450)
   }
 
   if (loading) {
@@ -224,6 +296,145 @@ export default function Admin() {
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="card p-4 sm:p-6 mt-5 lg:mt-6 min-w-0">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-11 h-11 rounded-2xl bg-[#E6F2EE] text-[#006A4E] flex items-center justify-center text-xl shrink-0">
+                🎁
+              </div>
+
+              <div className="min-w-0">
+                <h2 className="font-semibold text-[#333333]" dir="auto">
+                  {text.giveawayDraw}
+                </h2>
+                <p className="text-sm text-stone-500 mt-1 leading-relaxed" dir="auto">
+                  {text.giveawayDrawDesc}
+                </p>
+              </div>
+            </div>
+
+            <div className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full bg-[#FBF6E3] border border-[#D4AF37]/35 text-sm text-[#333333]">
+              <span className="font-semibold text-[#006A4E]">
+                {giveawayEntries.length}
+              </span>
+              <span dir="auto">{text.giveawayEntries}</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={pickGiveawayWinner}
+            disabled={!giveawayEntries.length || pickingWinner}
+            className="btn-primary justify-center shrink-0"
+          >
+            {pickingWinner ? text.pickingWinner : text.pickWinner}
+          </button>
+        </div>
+
+        {giveawayError && (
+          <div
+            className="mt-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm"
+            dir="auto"
+          >
+            {giveawayError}
+          </div>
+        )}
+
+        {!giveawayError && !giveawayEntries.length && (
+          <div
+            className="mt-5 bg-stone-50 border border-stone-200 text-stone-500 px-4 py-3 rounded-xl text-sm"
+            dir="auto"
+          >
+            {text.noEntries}
+          </div>
+        )}
+
+        {giveawayWinner && (
+          <div className="mt-5 rounded-2xl border border-[#D4AF37]/45 bg-[#FBF6E3] p-5">
+            <div className="text-xs uppercase tracking-[0.18em] text-[#B89122] font-semibold mb-3">
+              {text.winner}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white/80 rounded-xl border border-[#DDD8C8] p-4">
+                <div className="text-xs text-stone-500 mb-1" dir="auto">
+                  {text.winnerName}
+                </div>
+                <div className="text-lg font-bold text-[#333333]" dir="auto">
+                  {giveawayWinner.full_name}
+                </div>
+              </div>
+
+              <div className="bg-white/80 rounded-xl border border-[#DDD8C8] p-4">
+                <div className="text-xs text-stone-500 mb-1" dir="auto">
+                  {text.winnerEmail}
+                </div>
+                <div className="text-lg font-bold text-[#333333]" dir="ltr">
+                  {giveawayWinner.email || '—'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!giveawayError && giveawayEntries.length > 0 && (
+          <div className="mt-6">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h3 className="font-semibold text-[#333333]" dir="auto">
+                {text.participants}
+              </h3>
+              <span className="text-xs text-stone-500">
+                {giveawayEntries.length}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto rounded-2xl border border-[#DDD8C8]">
+              <table className="w-full min-w-[760px] text-sm bg-white">
+                <thead>
+                  <tr className="text-stone-500 border-b border-stone-100 bg-[#F5F5F0]">
+                    <th className="text-start px-4 py-3 font-medium">
+                      {text.participantName}
+                    </th>
+                    <th className="text-start px-4 py-3 font-medium">
+                      {text.participantEmail}
+                    </th>
+                    <th className="text-start px-4 py-3 font-medium">
+                      {text.participantTicket}
+                    </th>
+                    <th className="text-start px-4 py-3 font-medium">
+                      {text.participantDate}
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {giveawayEntries.map((entry, index) => (
+                    <tr
+                      key={`${entry.ticket_number || entry.email || entry.full_name}-${index}`}
+                      className="border-b border-stone-50 last:border-0"
+                    >
+                      <td className="px-4 py-3 font-medium text-[#333333]" dir="auto">
+                        {entry.full_name}
+                      </td>
+                      <td className="px-4 py-3 text-stone-600" dir="ltr">
+                        {entry.email || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-stone-600" dir="auto">
+                        {entry.ticket_number || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-stone-500" dir="auto">
+                        {formatGiveawayDate(entry.created_at, lang)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

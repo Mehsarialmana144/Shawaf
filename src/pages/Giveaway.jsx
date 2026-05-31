@@ -14,7 +14,7 @@ export default function Giveaway() {
   const isArabic = lang === 'ar'
 
   const text = {
-    eyebrow: isArabic ? 'سحب شواف على هدية تذكارية' : 'Shawaf Souvenir Gift Draw',
+    eyebrow: isArabic ? 'تسجيل سحب شواف' : 'Shawaf Giveaway Check-In',
     title: isArabic ? 'مرحبًا بك في شواف' : 'Welcome to Shawaf',
     subtitle: isArabic
       ? 'هل أنت مستعد لبدء رحلتك معنا؟'
@@ -38,8 +38,8 @@ export default function Giveaway() {
       ? 'تم إكمال تسجيل حضورك بنجاح.'
       : 'Your check-in has been completed successfully.',
     successLineTwo: isArabic
-      ? 'تم إدخالك في السحب على هدية تذكارية من شواف.'
-      : 'You have been entered into the draw for a Shawaf souvenir gift.',
+      ? 'تم إدخالك في السحب على هدية تذكارية.'
+      : 'You have been entered into the draw for a souvenir gift.',
     successLineThree: isArabic ? 'حظًا موفقًا أيها المستكشف!' : 'Good luck, Explorer!',
     startJourney: isArabic ? 'ابدأ رحلتك' : 'Start Your Journey',
     logoAlt: isArabic ? 'شعار شواف' : 'Shawaf logo',
