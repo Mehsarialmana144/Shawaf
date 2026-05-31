@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../context/LanguageContext'
 
 const GIVEAWAY_SIGNUP_PREFILL_KEY = 'shawafGiveawaySignupPrefill'
+const GIVEAWAY_BACKGROUND =
+  'radial-gradient(circle at 18% 25%, rgba(212, 175, 55, 0.24), transparent 32%), radial-gradient(circle at 82% 30%, rgba(255, 255, 255, 0.10), transparent 34%), linear-gradient(135deg, #002F24 0%, #006A4E 48%, #0B3B2F 100%)'
+const GIVEAWAY_THEME_COLOR = '#002F24'
 
 export default function Giveaway() {
   const navigate = useNavigate()
@@ -11,7 +14,7 @@ export default function Giveaway() {
   const isArabic = lang === 'ar'
 
   const text = {
-    eyebrow: isArabic ? 'سحب حقيبة السفر من شواف' : 'Shawaf Travel Kit Giveaway',
+    eyebrow: isArabic ? 'سحب شواف على هدية تذكارية' : 'Shawaf Souvenir Gift Draw',
     title: isArabic ? 'مرحبًا بك في شواف' : 'Welcome to Shawaf',
     subtitle: isArabic
       ? 'هل أنت مستعد لبدء رحلتك معنا؟'
@@ -35,8 +38,8 @@ export default function Giveaway() {
       ? 'تم إكمال تسجيل حضورك بنجاح.'
       : 'Your check-in has been completed successfully.',
     successLineTwo: isArabic
-      ? 'تم إدخالك في سحب حقيبة السفر من شواف.'
-      : 'You have been entered into the Shawaf Travel Kit giveaway.',
+      ? 'تم إدخالك في السحب على هدية تذكارية من شواف.'
+      : 'You have been entered into the draw for a Shawaf souvenir gift.',
     successLineThree: isArabic ? 'حظًا موفقًا أيها المستكشف!' : 'Good luck, Explorer!',
     startJourney: isArabic ? 'ابدأ رحلتك' : 'Start Your Journey',
     logoAlt: isArabic ? 'شعار شواف' : 'Shawaf logo',
@@ -56,6 +59,65 @@ export default function Giveaway() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    const root = document.getElementById('root')
+    const viewportMeta = document.querySelector('meta[name="viewport"]')
+    let themeMeta = document.querySelector('meta[name="theme-color"]')
+
+    const previous = {
+      htmlBackground: html.style.background,
+      htmlBackgroundColor: html.style.backgroundColor,
+      bodyBackground: body.style.background,
+      bodyBackgroundColor: body.style.backgroundColor,
+      rootBackground: root?.style.background,
+      rootBackgroundColor: root?.style.backgroundColor,
+      viewport: viewportMeta?.getAttribute('content'),
+      hadThemeMeta: Boolean(themeMeta),
+      themeColor: themeMeta?.getAttribute('content'),
+    }
+
+    if (!themeMeta) {
+      themeMeta = document.createElement('meta')
+      themeMeta.setAttribute('name', 'theme-color')
+      document.head.appendChild(themeMeta)
+    }
+
+    viewportMeta?.setAttribute('content', 'width=device-width, initial-scale=1.0, viewport-fit=cover')
+    themeMeta.setAttribute('content', GIVEAWAY_THEME_COLOR)
+
+    html.style.background = GIVEAWAY_BACKGROUND
+    html.style.backgroundColor = GIVEAWAY_THEME_COLOR
+    body.style.background = GIVEAWAY_BACKGROUND
+    body.style.backgroundColor = GIVEAWAY_THEME_COLOR
+    if (root) {
+      root.style.background = GIVEAWAY_BACKGROUND
+      root.style.backgroundColor = GIVEAWAY_THEME_COLOR
+    }
+
+    return () => {
+      html.style.background = previous.htmlBackground
+      html.style.backgroundColor = previous.htmlBackgroundColor
+      body.style.background = previous.bodyBackground
+      body.style.backgroundColor = previous.bodyBackgroundColor
+      if (root) {
+        root.style.background = previous.rootBackground
+        root.style.backgroundColor = previous.rootBackgroundColor
+      }
+      if (viewportMeta && previous.viewport) {
+        viewportMeta.setAttribute('content', previous.viewport)
+      }
+      if (themeMeta) {
+        if (previous.hadThemeMeta) {
+          themeMeta.setAttribute('content', previous.themeColor || '')
+        } else {
+          themeMeta.remove()
+        }
+      }
+    }
+  }, [])
 
   const handleChange = (field) => (e) => {
     setForm((current) => ({
@@ -114,8 +176,7 @@ export default function Giveaway() {
     <div
       className="relative min-h-screen flex items-center overflow-hidden px-4 sm:px-6 lg:px-8 py-10 sm:py-14"
       style={{
-        background:
-          'radial-gradient(circle at 18% 25%, rgba(212, 175, 55, 0.24), transparent 32%), radial-gradient(circle at 82% 30%, rgba(255, 255, 255, 0.10), transparent 34%), linear-gradient(135deg, #002F24 0%, #006A4E 48%, #0B3B2F 100%)',
+        background: GIVEAWAY_BACKGROUND,
       }}
     >
       <div

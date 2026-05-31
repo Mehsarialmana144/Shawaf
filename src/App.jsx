@@ -28,7 +28,11 @@ function AppShell() {
   const hideAppChrome = location.pathname === '/giveaway'
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F5F5F0] text-[#333333] overflow-x-hidden">
+    <div
+      className={`min-h-screen flex flex-col text-[#333333] overflow-x-hidden ${
+        hideAppChrome ? 'bg-[#002F24]' : 'bg-[#F5F5F0]'
+      }`}
+    >
       {!hideAppChrome && <Navbar />}
 
       <main className="flex-1 w-full overflow-x-hidden">
