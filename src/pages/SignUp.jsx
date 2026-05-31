@@ -3,6 +3,16 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LanguageContext'
 
+const GIVEAWAY_SIGNUP_PREFILL_KEY = 'shawafGiveawaySignupPrefill'
+
+function getGiveawaySignupPrefill() {
+  try {
+    return JSON.parse(sessionStorage.getItem(GIVEAWAY_SIGNUP_PREFILL_KEY)) || {}
+  } catch {
+    return {}
+  }
+}
+
 export default function SignUp() {
   const { signUp, signIn } = useAuth()
   const { t, lang } = useLang()
@@ -30,8 +40,9 @@ export default function SignUp() {
     arrow: isArabic ? '←' : '→',
   }
 
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
+  const [giveawayPrefill] = useState(getGiveawaySignupPrefill)
+  const [fullName, setFullName] = useState(giveawayPrefill.fullName || '')
+  const [email, setEmail] = useState(giveawayPrefill.email || '')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -47,6 +58,7 @@ export default function SignUp() {
       const result = await signUp({ email, password, fullName })
 
       if (result?.session || result?.data?.session) {
+        sessionStorage.removeItem(GIVEAWAY_SIGNUP_PREFILL_KEY)
         setSuccess(true)
         navigate('/planner')
         return
@@ -54,11 +66,13 @@ export default function SignUp() {
 
       if (signIn) {
         await signIn({ email, password })
+        sessionStorage.removeItem(GIVEAWAY_SIGNUP_PREFILL_KEY)
         setSuccess(true)
         navigate('/planner')
         return
       }
 
+      sessionStorage.removeItem(GIVEAWAY_SIGNUP_PREFILL_KEY)
       setSuccess(true)
       navigate('/planner')
     } catch (err) {
