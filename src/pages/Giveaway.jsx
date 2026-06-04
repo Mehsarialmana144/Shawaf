@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import QRCode from 'qrcode'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../context/LanguageContext'
 
@@ -7,6 +8,26 @@ const GIVEAWAY_SIGNUP_PREFILL_KEY = 'shawafGiveawaySignupPrefill'
 const GIVEAWAY_BACKGROUND =
   'radial-gradient(circle at 18% 25%, rgba(212, 175, 55, 0.24), transparent 32%), radial-gradient(circle at 82% 30%, rgba(255, 255, 255, 0.10), transparent 34%), linear-gradient(135deg, #002F24 0%, #006A4E 48%, #0B3B2F 100%)'
 const GIVEAWAY_THEME_COLOR = '#002F24'
+const CV_DOWNLOADS = [
+  {
+    key: 'ahmed',
+    name: 'Ahmed Alqaoud',
+    role: 'CV / Resume',
+    href: '/cvs/ahmed-alqaoud-cv.pdf',
+  },
+  {
+    key: 'meshari',
+    name: 'Meshari Almana',
+    role: 'CV / Resume',
+    href: '/cvs/meshari-cv.pdf',
+  },
+  {
+    key: 'abdullah',
+    name: 'Abdullah Alajlan',
+    role: 'CV / Resume',
+    href: '/cvs/abdullah-alajlan-cv.pdf',
+  },
+]
 
 export default function Giveaway() {
   const navigate = useNavigate()
@@ -34,13 +55,11 @@ export default function Giveaway() {
       ? 'تعذر إكمال تسجيل الحضور. يرجى المحاولة مرة أخرى.'
       : 'Unable to complete check-in. Please try again.',
     successTitle: isArabic ? 'أهلًا بك معنا!' : 'Welcome Aboard!',
-    successLineOne: isArabic
-      ? 'تم إكمال تسجيل حضورك بنجاح.'
-      : 'Your check-in has been completed successfully.',
-    successLineTwo: isArabic
-      ? 'تم إدخالك في السحب على هدية تذكارية.'
-      : 'You have been entered into the draw for a souvenir gift.',
-    successLineThree: isArabic ? 'حظًا موفقًا أيها المستكشف!' : 'Good luck, Explorer!',
+    cvIntro: isArabic
+      ? 'تم تسجيل حضورك. يمكنك الآن مسح رمز QR أو تحميل السير الذاتية مباشرة.'
+      : 'Your check-in is complete. Scan a QR code or download each CV directly.',
+    scanLabel: isArabic ? 'امسح رمز QR' : 'Scan QR',
+    downloadCv: isArabic ? 'تحميل السيرة الذاتية' : 'Download CV',
     startJourney: isArabic ? 'ابدأ رحلتك' : 'Start Your Journey',
     logoAlt: isArabic ? 'شعار شواف' : 'Shawaf logo',
   }
@@ -59,6 +78,7 @@ export default function Giveaway() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [qrCodes, setQrCodes] = useState({})
 
   useEffect(() => {
     const html = document.documentElement
@@ -116,6 +136,42 @@ export default function Giveaway() {
           themeMeta.remove()
         }
       }
+    }
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const buildQrCodes = async () => {
+      const origin = window.location.origin
+      const entries = await Promise.all(
+        CV_DOWNLOADS.map(async (cv) => [
+          cv.key,
+          await QRCode.toDataURL(`${origin}${cv.href}`, {
+            errorCorrectionLevel: 'M',
+            margin: 1,
+            scale: 7,
+            color: {
+              dark: '#002F24',
+              light: '#FFFFFF',
+            },
+          }),
+        ])
+      )
+
+      if (isMounted) {
+        setQrCodes(Object.fromEntries(entries))
+      }
+    }
+
+    buildQrCodes().catch(() => {
+      if (isMounted) {
+        setQrCodes({})
+      }
+    })
+
+    return () => {
+      isMounted = false
     }
   }, [])
 
@@ -350,8 +406,8 @@ export default function Giveaway() {
                 </form>
               </>
             ) : (
-              <div className="text-center py-8 sm:py-10">
-                <div className="w-24 h-24 rounded-3xl bg-[#E6F2EE] border border-[#D4AF37]/45 flex items-center justify-center mx-auto mb-6 shadow-sm overflow-hidden">
+              <div className="py-3 sm:py-5">
+                <div className="w-20 h-20 rounded-2xl bg-[#E6F2EE] border border-[#D4AF37]/45 flex items-center justify-center mx-auto mb-5 shadow-sm overflow-hidden">
                   <img
                     src="/brand/shawaf-logo.png"
                     alt={text.logoAlt}
@@ -359,20 +415,65 @@ export default function Giveaway() {
                   />
                 </div>
 
-                <h2 className="text-3xl sm:text-4xl font-bold text-[#333333]" dir="auto">
+                <h2 className="text-2xl sm:text-3xl font-bold text-center text-[#333333]" dir="auto">
                   {text.successTitle}
                 </h2>
 
-                <div className="mt-5 space-y-3 text-stone-600 leading-relaxed" dir="auto">
-                  <p>{text.successLineOne}</p>
-                  <p>{text.successLineTwo}</p>
-                  <p className="font-semibold text-[#006A4E]">{text.successLineThree}</p>
+                <p
+                  className="mt-3 text-center text-sm sm:text-base text-stone-600 leading-relaxed max-w-md mx-auto"
+                  dir="auto"
+                >
+                  {text.cvIntro}
+                </p>
+
+                <div className="mt-6 grid gap-4">
+                  {CV_DOWNLOADS.map((cv) => (
+                    <article
+                      key={cv.key}
+                      className="rounded-2xl border border-[#DDD8C8] bg-[#F5F5F0] p-4 sm:p-5 shadow-sm"
+                    >
+                      <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="w-32 h-32 rounded-2xl border border-[#D4AF37]/40 bg-white p-2 shadow-inner flex items-center justify-center shrink-0">
+                          {qrCodes[cv.key] ? (
+                            <img
+                              src={qrCodes[cv.key]}
+                              alt={`${text.scanLabel}: ${cv.name}`}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-xl bg-[#E6F2EE] animate-pulse" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1 text-center sm:text-start">
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#006A4E]">
+                            {text.scanLabel}
+                          </p>
+                          <h3 className="mt-1 text-lg font-bold text-[#333333]" dir="auto">
+                            {cv.name}
+                          </h3>
+                          <p className="text-sm text-stone-500">{cv.role}</p>
+
+                          <a
+                            href={cv.href}
+                            download
+                            className="mt-4 w-full sm:w-auto bg-[#D4AF37] hover:bg-[#B89122] text-[#333333] font-semibold px-5 py-2.5 rounded-xl transition-all shadow-md hover:shadow-[#D4AF37]/25 inline-flex items-center justify-center gap-2"
+                          >
+                            <span className="text-xs font-bold" aria-hidden="true">
+                              PDF
+                            </span>
+                            <span dir="auto">{text.downloadCv}</span>
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
                 </div>
 
                 <button
                   type="button"
                   onClick={() => navigate('/signup')}
-                  className="bg-[#D4AF37] hover:bg-[#B89122] text-[#333333] font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg inline-flex items-center justify-center mt-8"
+                  className="bg-[#006A4E] hover:bg-[#004D39] text-white font-semibold px-8 py-3.5 rounded-full transition-colors shadow-lg flex items-center justify-center mt-7 mx-auto"
                 >
                   <span dir="auto">{text.startJourney}</span>
                 </button>
